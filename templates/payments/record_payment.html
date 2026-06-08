@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Ghi nhận thanh toán — {{ group.name }}{% endblock %}
+{% block content %}
+<div class="wrap-sm">
+  <div class="page-header">
+    <div class="page-title">✅ Ghi nhận thanh toán</div>
+    <div class="page-sub">{{ group.name }}</div>
+  </div>
+
+  <!-- Member info -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-pad" style="display:flex;align-items:center;gap:16px">
+      <div class="avatar" style="width:48px;height:48px;font-size:20px">
+        {{ member.get_display_name|slice:":1"|upper }}
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:16px">{{ member.get_display_name }}</div>
+        <div class="text-sm text-muted">@{{ member.username }}</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div class="money text-red" style="font-size:22px;font-weight:800">{{ wallet.debt|floatformat:0 }}đ</div>
+        <div class="text-xs text-muted">Công nợ hiện tại</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Thông tin thanh toán</span></div>
+    <div class="card-pad">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Số tiền</label>
+          <input name="amount" type="number" class="form-control"
+            value="{{ wallet.debt|floatformat:0 }}" min="1" max="{{ wallet.debt|floatformat:0 }}"
+            style="font-size:18px;font-weight:700" required>
+          <div class="text-xs text-muted" style="margin-top:4px">
+            Mặc định là toàn bộ công nợ. Có thể nhập ít hơn nếu thanh toán một phần.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Hình thức thanh toán</label>
+          <select name="method" class="form-control">
+            <option value="cash">💵 Tiền mặt</option>
+            <option value="transfer">🏦 Chuyển khoản</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Ghi chú <span class="text-muted">(tùy chọn)</span></label>
+          <input name="note" class="form-control" placeholder="VD: Đã trả tiền mặt tại sân ngày hôm nay">
+        </div>
+
+        <div class="flex gap-2 mt-4">
+          <button type="submit" class="btn btn-primary">✅ Xác nhận đã trả</button>
+          <a href="{% url 'debt_report' group.pk %}" class="btn btn-secondary">Hủy</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

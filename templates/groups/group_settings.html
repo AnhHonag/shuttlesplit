@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Cài đặt nhóm{% endblock %}
+{% block content %}
+<div class="wrap-sm">
+  <div class="page-header">
+    <div class="page-title">⚙️ Cài đặt nhóm</div>
+    <div class="page-sub">{{ group.name }}</div>
+  </div>
+  <div class="card"><div class="card-pad">
+    <form method="post" id="group-form">{% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Tên nhóm</label>
+        <input name="name" class="form-control" value="{{ group.name }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mô tả</label>
+        <textarea name="description" class="form-control" rows="2">{{ group.description }}</textarea>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--c-border);margin:20px 0">
+      <p style="font-weight:700;font-size:14px;margin-bottom:4px">💳 Thông tin nhận chuyển khoản</p>
+      <p class="text-sm text-muted" style="margin-bottom:16px">Dùng trong email nhắc nợ tự động</p>
+
+      <div class="form-group">
+        <label class="form-label">Ngân hàng</label>
+        <input name="bank_name" class="form-control" value="{{ group.bank_name }}"
+          placeholder="VD: Vietcombank, MB Bank, Techcombank...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Số tài khoản</label>
+        <input name="bank_account" class="form-control" value="{{ group.bank_account }}"
+          placeholder="Nhập số tài khoản" style="font-size:16px;letter-spacing:1px;font-weight:600">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Chủ tài khoản</label>
+        <input name="bank_owner" class="form-control" value="{{ group.bank_owner }}"
+          placeholder="Tên chủ tài khoản" style="font-weight:700;text-transform:uppercase">
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--c-border);margin:20px 0">
+      <div class="form-group">
+        <label class="form-label">Trạng thái nhóm</label>
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;
+            border-radius:8px;border:2px solid {% if group.is_active %}var(--c-green){% else %}var(--c-border-2){% endif %};
+            background:{% if group.is_active %}var(--c-green-light){% else %}var(--c-bg){% endif %}">
+            <input type="radio" name="is_active" value="1" {% if group.is_active %}checked{% endif %}
+              onchange="updateStatus(this)">
+            <span>✅ Đang hoạt động</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;
+            border-radius:8px;border:2px solid {% if not group.is_active %}var(--c-red){% else %}var(--c-border-2){% endif %};
+            background:{% if not group.is_active %}var(--c-red-light){% else %}var(--c-bg){% endif %}">
+            <input type="radio" name="is_active" value="0" {% if not group.is_active %}checked{% endif %}
+              onchange="updateStatus(this)">
+            <span>🔴 Ngưng hoạt động</span>
+          </label>
+        </div>
+        <p class="text-sm text-muted" style="margin-top:8px">Nhóm ngưng hoạt động sẽ bị ẩn khỏi dashboard của tất cả thành viên.</p>
+      </div>
+
+      <div class="flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary">Hủy</a>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateStatus(el) {
+  document.querySelectorAll('[name="is_active"]').forEach(r => {
+    const lbl = r.closest('label');
+    const active = r.value === '1';
+    lbl.style.borderColor = r.checked ? (active ? 'var(--c-green)' : 'var(--c-red)') : 'var(--c-border-2)';
+    lbl.style.background  = r.checked ? (active ? 'var(--c-green-light)' : 'var(--c-red-light)') : 'var(--c-bg)';
+  });
+}
+</script>
+{% endblock %}

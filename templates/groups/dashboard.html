@@ -1,0 +1,106 @@
+{% extends 'base.html' %}{% block title %}Tổng quan — ShuttleSplit{% endblock %}
+{% block content %}<div class="wrap">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <div class="page-title">👋 Xin chào, {{ user.get_display_name }}</div>
+      <div class="page-sub">Quản lý chi phí cầu lông của bạn</div>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'create_group' %}" class="btn btn-primary">+ Tạo nhóm</a>
+      <a href="{% url 'join_group' %}" class="btn btn-secondary">🔑 Tham gia</a>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat {% if total_debt > 0 %}red{% else %}green{% endif %}">
+      <div style="font-size:24px;margin-bottom:8px">{% if total_debt > 0 %}🔴{% else %}✅{% endif %}</div>
+      <div class="stat-val">{{ total_debt|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Tổng công nợ</div>
+    </div>
+    <div class="stat green">
+      <div style="font-size:24px;margin-bottom:8px">💰</div>
+      <div class="stat-val">{{ total_balance|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Tổng số dư</div>
+    </div>
+    <div class="stat blue">
+      <div style="font-size:24px;margin-bottom:8px">🏸</div>
+      <div class="stat-val">{{ memberships|length }}</div>
+      <div class="stat-lbl">Nhóm tham gia</div>
+    </div>
+  </div>
+
+  <!-- GROUPS -->
+  <div class="flex items-center justify-between mb-4">
+    <h2 style="font-weight:800;font-size:18px">Nhóm của tôi</h2>
+  </div>
+  {% if memberships %}
+  <div class="three-col mb-6">
+    {% for m in memberships %}
+    <a href="{% url 'group_detail' m.group.pk %}" class="group-card {% if m.is_host %}host-card{% endif %}">
+      <h3>{{ m.group.name }}</h3>
+      <div class="meta">
+        <span>👥 {{ m.group.members.count }} thành viên</span>
+        <span>📅 {{ m.group.sessions.count }} buổi</span>
+        {% if m.is_host %}<span style="color:var(--c-green);font-weight:700">👑 Chủ nhóm</span>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card mb-6"><div class="empty">
+    <div class="empty-icon">🏸</div>
+    <h3>Chưa có nhóm nào</h3>
+    <p>Tạo nhóm mới hoặc tham gia nhóm bằng mã mời</p>
+    <div class="flex gap-2" style="justify-content:center">
+      <a href="{% url 'create_group' %}" class="btn btn-primary">Tạo nhóm</a>
+      <a href="{% url 'join_group' %}" class="btn btn-secondary">Tham gia</a>
+    </div>
+  </div></div>
+  {% endif %}
+
+  <!-- INACTIVE GROUPS (owner only) -->
+  {% if inactive_memberships %}
+  <details style="margin-bottom:24px">
+    <summary style="cursor:pointer;font-weight:700;font-size:15px;color:var(--c-ink-2);
+      padding:10px 0;list-style:none;display:flex;align-items:center;gap:8px">
+      <span>🔴 Nhóm đã ngưng hoạt động ({{ inactive_memberships|length }})</span>
+      <span style="font-size:12px;font-weight:400">(bấm để xem)</span>
+    </summary>
+    <div class="three-col" style="margin-top:12px;opacity:.6">
+      {% for m in inactive_memberships %}
+      <a href="{% url 'group_settings' m.group.pk %}" class="group-card"
+        style="border:2px dashed var(--c-border-2)">
+        <h3 style="color:var(--c-ink-2)">{{ m.group.name }}</h3>
+        <div class="meta">
+          <span>👥 {{ m.group.members.count }} thành viên</span>
+          <span style="color:var(--c-red);font-weight:600">🔴 Ngưng hoạt động</span>
+        </div>
+        <div style="font-size:12px;color:var(--c-ink-3);margin-top:6px">Bấm để bật lại</div>
+      </a>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+
+  <!-- RECENT SESSIONS -->
+  {% if recent_sessions %}
+  <h2 style="font-weight:800;font-size:18px;margin-bottom:16px">Buổi chơi gần đây</h2>
+  <div class="card">
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Nhóm</th><th>Ngày</th><th>Địa điểm</th><th>Tổng chi phí</th><th>Mỗi người</th><th></th></tr></thead>
+      <tbody>
+        {% for s in recent_sessions %}
+        <tr>
+          <td><span class="font-bold">{{ s.group.name }}</span></td>
+          <td>{{ s.date }}</td>
+          <td class="text-muted">{{ s.location|default:"—" }}</td>
+          <td><span class="money">{{ s.total_fee|floatformat:0 }}đ</span></td>
+          <td><span class="money text-red">{{ s.fee_per_person|floatformat:0 }}đ</span></td>
+          <td><a href="{% url 'session_detail' s.pk %}" class="btn btn-sm btn-ghost">Xem</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  {% endif %}
+</div>{% endblock %}

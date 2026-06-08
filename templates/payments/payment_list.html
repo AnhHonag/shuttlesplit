@@ -1,0 +1,48 @@
+{% extends 'base.html' %}{% block title %}Danh sách thanh toán{% endblock %}
+{% block content %}<div class="wrap">
+  <div class="page-header flex items-center justify-between">
+    <div><div class="page-title">💳 Thanh toán</div>
+    <div class="page-sub">{{ group.name }}</div></div>
+    <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary">← Quay lại</a>
+  </div>
+
+  {% if payments %}
+  <div class="card"><div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>Thành viên</th><th>Số tiền</th><th>Phương thức</th>
+      <th>Ngày gửi</th><th>Trạng thái</th><th>Biên lai</th>
+      {% if is_host %}<th>Hành động</th>{% endif %}
+    </tr></thead>
+    <tbody>
+      {% for p in payments %}
+      <tr>
+        <td><div class="flex items-center gap-2">
+          <div class="avatar avatar-sm">{{ p.member.get_display_name|slice:":1"|upper }}</div>
+          <span class="font-bold">{{ p.member.get_display_name }}</span>
+        </div></td>
+        <td><span class="money text-green">{{ p.amount|floatformat:0 }}đ</span></td>
+        <td>{{ p.get_method_display }}</td>
+        <td class="text-muted">{{ p.created_at|date:"d/m/Y H:i" }}</td>
+        <td>
+          {% if p.status == 'confirmed' %}<span class="badge badge-green">✅ Đã xác nhận</span>
+          {% elif p.status == 'rejected' %}<span class="badge badge-red">❌ Từ chối</span>
+          {% else %}<span class="badge badge-yellow">⏳ Chờ xác nhận</span>{% endif %}
+        </td>
+        <td>{% if p.receipt_image %}<a href="{{ p.receipt_image.url }}" target="_blank" class="btn btn-sm btn-ghost">🖼️ Xem</a>{% else %}—{% endif %}</td>
+        {% if is_host %}
+        <td>{% if p.status == 'pending' %}
+          <form method="post" action="{% url 'confirm_payment' p.pk %}" style="display:inline">
+            {% csrf_token %}
+            <button name="action" value="confirm" class="btn btn-sm btn-primary">✅ Xác nhận</button>
+            <button name="action" value="reject" class="btn btn-sm btn-danger" style="margin-left:4px">❌ Từ chối</button>
+          </form>
+        {% else %}—{% endif %}</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div></div>
+  {% else %}
+  <div class="card"><div class="empty"><div class="empty-icon">💳</div><h3>Chưa có thanh toán nào</h3></div></div>
+  {% endif %}
+</div>{% endblock %}

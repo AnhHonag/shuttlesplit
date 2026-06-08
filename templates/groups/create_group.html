@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Tạo nhóm{% endblock %}
+{% block content %}
+<div class="wrap-sm">
+  <div class="page-header">
+    <div class="page-title">🏸 Tạo nhóm mới</div>
+  </div>
+  <div class="card"><div class="card-pad">
+    <form method="post" id="group-form">{% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Tên nhóm *</label>
+        <input name="name" class="form-control" placeholder="VD: CLB Cầu Lông Quận 3" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mô tả</label>
+        <textarea name="description" class="form-control" rows="2" placeholder="Mô tả ngắn về nhóm..."></textarea>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--c-border);margin:20px 0">
+      <p style="font-weight:700;font-size:14px;margin-bottom:4px">💳 Thông tin nhận chuyển khoản</p>
+      <p class="text-sm text-muted" style="margin-bottom:16px">Dùng để tự động điền vào email nhắc nợ cho thành viên (tùy chọn)</p>
+
+      <div class="form-group">
+        <label class="form-label">Ngân hàng</label>
+        <input name="bank_name" class="form-control" placeholder="VD: Vietcombank, MB Bank, Techcombank...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Số tài khoản</label>
+        <input name="bank_account" class="form-control" placeholder="Nhập số tài khoản"
+          style="font-size:16px;letter-spacing:1px;font-weight:600">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Chủ tài khoản</label>
+        <input name="bank_owner" class="form-control" placeholder="Tên chủ tài khoản"
+          style="font-weight:700;text-transform:uppercase">
+      </div>
+
+      <div class="flex gap-2 mt-4">
+        <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">Tạo nhóm</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-lg">Hủy</a>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

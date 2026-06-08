@@ -1,0 +1,116 @@
+{% extends 'base.html' %}{% block title %}Tạo buổi chơi{% endblock %}
+{% block content %}<div class="wrap-md">
+  <div class="page-header"><div class="page-title">🏸 Tạo buổi chơi mới</div>
+  <div class="page-sub">Nhóm: {{ group.name }}</div></div>
+
+  <form method="post" id="session-form">{% csrf_token %}
+    <div class="card mb-4" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title">📝 Thông tin buổi chơi</span></div>
+      <div class="card-pad">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Ngày chơi *</label>
+          <input type="date" name="date" class="form-control" required></div>
+          <div class="form-group"><label class="form-label">Địa điểm</label>
+          <input name="location" class="form-control" placeholder="Tên sân cầu lông..."></div>
+        </div>
+        <div class="form-group"><label class="form-label">Ghi chú</label>
+        <textarea name="note" class="form-control" rows="2" placeholder="Ghi chú thêm..."></textarea></div>
+      </div>
+    </div>
+
+    <div class="card mb-4" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title">💰 Chi phí</span></div>
+      <div class="card-pad">
+        <div class="form-row-3">
+          <div class="form-group"><label class="form-label">🏟 Tiền sân (đ)</label>
+          <input type="number" name="court_fee" class="form-control fee-input" value="0" min="0" step="1000"></div>
+          <div class="form-group"><label class="form-label">🏸 Tiền cầu (đ)</label>
+          <input type="number" name="shuttle_fee" class="form-control fee-input" value="0" min="0" step="1000"></div>
+          <div class="form-group"><label class="form-label">💧 Tiền nước (đ)</label>
+          <input type="number" name="water_fee" class="form-control fee-input" value="0" min="0" step="1000"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">📌 Chi phí khác (đ)</label>
+          <input type="number" name="other_fee" class="form-control fee-input" value="0" min="0" step="1000"></div>
+          <div class="form-group"><label class="form-label">Ghi chú chi phí khác</label>
+          <input name="other_fee_note" class="form-control" placeholder="VD: Thuê vợt..."></div>
+        </div>
+        <div class="fee-box" id="fee-summary">
+          <div class="fee-line"><span>🏟 Tiền sân</span><span class="fee-amt" id="d-court">0đ</span></div>
+          <div class="fee-line"><span>🏸 Tiền cầu</span><span class="fee-amt" id="d-shuttle">0đ</span></div>
+          <div class="fee-line"><span>💧 Tiền nước</span><span class="fee-amt" id="d-water">0đ</span></div>
+          <div class="fee-line"><span>📌 Chi phí khác</span><span class="fee-amt" id="d-other">0đ</span></div>
+          <div class="fee-line" style="border-top:2px solid var(--c-border-2);margin-top:8px">
+            <span>Tổng cộng</span><span class="fee-amt text-green" id="d-total">0đ</span>
+          </div>
+          <div class="fee-line" style="background:var(--c-red-light);margin:-1px;padding:10px 0;border-radius:0 0 8px 8px">
+            <span style="color:var(--c-red);font-weight:700">💸 Mỗi người đóng (~)</span>
+            <span class="fee-amt text-red" id="d-per">0đ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4" style="margin-bottom:16px">
+      <div class="card-header">
+        <span class="card-title">👥 Thành viên tham gia</span>
+        <div>
+          <span class="text-sm text-muted">Đã chọn: </span>
+          <span class="font-bold" id="sel-count">0</span>
+          <span class="text-sm text-muted"> / {{ members|length }}</span>
+          <button type="button" onclick="selectAll()" class="btn btn-sm btn-ghost" style="margin-left:8px">Chọn tất cả</button>
+        </div>
+      </div>
+      <div class="card-pad">
+        <div class="member-grid">
+          {% for m in members %}
+          <label class="member-chk" id="mc-{{ m.user.pk }}">
+            <input type="checkbox" name="participants" value="{{ m.user.pk }}"
+              onchange="onCheck(this,'mc-{{ m.user.pk }}')">
+            <div class="avatar avatar-sm">{{ m.user.get_display_name|slice:":1"|upper }}</div>
+            <span class="member-name">{{ m.user.get_display_name }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" class="btn btn-primary btn-lg">✅ Tạo buổi chơi</button>
+      <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary btn-lg">Hủy</a>
+    </div>
+  </form>
+</div>{% endblock %}
+
+{% block extra_js %}
+<script>
+const fmt=n=>n.toLocaleString('vi')+'đ';
+const getV=n=>parseInt(document.querySelector('[name="'+n+'"]').value)||0;
+function calc(){
+  const c=getV('court_fee'),s=getV('shuttle_fee'),w=getV('water_fee'),o=getV('other_fee');
+  const total=c+s+w+o;
+  const cnt=document.querySelectorAll('[name="participants"]:checked').length;
+  document.getElementById('d-court').textContent=fmt(c);
+  document.getElementById('d-shuttle').textContent=fmt(s);
+  document.getElementById('d-water').textContent=fmt(w);
+  document.getElementById('d-other').textContent=fmt(o);
+  document.getElementById('d-total').textContent=fmt(total);
+  document.getElementById('d-per').textContent=cnt?fmt(Math.round(total/cnt)):'0đ';
+}
+function onCheck(el,id){
+  document.getElementById(id).classList.toggle('is-checked',el.checked);
+  const cnt=document.querySelectorAll('[name="participants"]:checked').length;
+  document.getElementById('sel-count').textContent=cnt;
+  calc();
+}
+function selectAll(){
+  document.querySelectorAll('[name="participants"]').forEach(el=>{
+    el.checked=true;
+    el.closest('.member-chk').classList.add('is-checked');
+  });
+  document.getElementById('sel-count').textContent='{{ members|length }}';
+  calc();
+}
+document.querySelectorAll('.fee-input').forEach(el=>el.addEventListener('input',calc));
+</script>
+{% endblock %}

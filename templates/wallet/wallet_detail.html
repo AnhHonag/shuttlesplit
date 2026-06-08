@@ -1,0 +1,56 @@
+{% extends 'base.html' %}{% block title %}Ví tiền — {{ group.name }}{% endblock %}
+{% block content %}<div class="wrap-md">
+  <div class="page-header flex items-center justify-between">
+    <div><div class="page-title">💰 Ví tiền</div>
+    <div class="page-sub">{{ group.name }}</div></div>
+    <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary">← Quay lại</a>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat {% if wallet.balance >= 0 %}green{% else %}red{% endif %}">
+      <div class="stat-val">{{ wallet.balance|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Số dư hiện tại</div>
+    </div>
+    <div class="stat green">
+      <div class="stat-val">{{ wallet.total_deposited|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Tổng đã nạp</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">{{ wallet.total_spent|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Tổng đã dùng</div>
+    </div>
+    {% if wallet.debt > 0 %}
+    <div class="stat red">
+      <div class="stat-val">{{ wallet.debt|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Công nợ</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">📋 Lịch sử giao dịch</span></div>
+    <div class="card-pad" style="padding-top:8px">
+      {% if transactions %}
+      {% for tx in transactions %}
+      <div class="tx-row">
+        <div class="tx-icon {% if tx.transaction_type == 'deposit' or tx.transaction_type == 'debt_paid' %}in{% else %}out{% endif %}">
+          {% if tx.transaction_type == 'deposit' %}💰
+          {% elif tx.transaction_type == 'deduct' %}🏸
+          {% elif tx.transaction_type == 'debt_paid' %}✅
+          {% else %}↩️{% endif %}
+        </div>
+        <div class="tx-body">
+          <div class="tx-desc">{{ tx.description|default:tx.get_transaction_type_display }}</div>
+          <div class="tx-date">{{ tx.created_at|date:"d/m/Y H:i" }} · Số dư: {{ tx.balance_after|floatformat:0 }}đ</div>
+        </div>
+        <div class="tx-amt {% if tx.transaction_type == 'deposit' or tx.transaction_type == 'debt_paid' or tx.transaction_type == 'refund' %}in{% else %}out{% endif %}">
+          {% if tx.transaction_type == 'deduct' %}-{% else %}+{% endif %}{{ tx.amount|floatformat:0 }}đ
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty" style="padding:32px"><div class="empty-icon">💰</div><p>Chưa có giao dịch nào</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}{% block title %}Sửa thành viên{% endblock %}
+{% block content %}<div class="wrap-sm">
+  <div class="page-header"><div class="page-title">✏️ Sửa thành viên</div>
+  <div class="page-sub">Nhóm: {{ group.name }}</div></div>
+  <div class="card"><div class="card-pad">
+    <form method="post">{% csrf_token %}
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Họ tên</label>
+        <input name="full_name" class="form-control" value="{{ member.full_name }}"></div>
+        <div class="form-group"><label class="form-label">Tên đăng nhập</label>
+        <input class="form-control" value="{{ member.username }}" disabled></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label>
+        <input name="email" type="email" class="form-control" value="{{ member.email }}"></div>
+        <div class="form-group"><label class="form-label">Số điện thoại</label>
+        <input name="phone" class="form-control" value="{{ member.phone }}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Mật khẩu mới (để trống nếu không đổi)</label>
+      <input name="new_password" type="password" class="form-control"></div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">Lưu</button>
+        <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary">Hủy</a>
+        <a href="{% url 'remove_member' group.pk membership.pk %}" class="btn btn-danger"
+          onclick="return confirm('Xóa thành viên này khỏi nhóm?')">🗑️ Xóa</a>
+      </div>
+    </form>
+  </div></div>
+</div>{% endblock %}

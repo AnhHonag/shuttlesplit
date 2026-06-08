@@ -1,0 +1,49 @@
+{% extends 'base.html' %}{% block title %}Gửi thanh toán{% endblock %}
+{% block content %}<div class="wrap-sm">
+  <div class="page-header"><div class="page-title">💳 Thanh toán công nợ</div>
+  <div class="page-sub">{{ group.name }}</div></div>
+
+  {% if wallet.debt > 0 %}
+  <div class="stat red mb-4" style="margin-bottom:20px;border-radius:12px">
+    <div class="stat-val">{{ wallet.debt|floatformat:0 }}đ</div>
+    <div class="stat-lbl">Công nợ hiện tại của bạn</div>
+  </div>
+  {% endif %}
+
+  {% if group.bank_account %}
+  <div class="card mb-4" style="margin-bottom:20px;background:var(--c-ink);color:#fff">
+    <div class="card-pad">
+      <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:12px">Thông tin chuyển khoản</div>
+      <div style="display:grid;gap:8px">
+        <div class="flex justify-between"><span style="color:rgba(255,255,255,.6)">Ngân hàng</span><span style="font-weight:700">{{ group.bank_name }}</span></div>
+        <div class="flex justify-between"><span style="color:rgba(255,255,255,.6)">Số TK</span><span style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:800;color:#4ADE80">{{ group.bank_account }}</span></div>
+        <div class="flex justify-between"><span style="color:rgba(255,255,255,.6)">Chủ TK</span><span style="font-weight:700">{{ group.bank_owner }}</span></div>
+        <div class="flex justify-between"><span style="color:rgba(255,255,255,.6)">Nội dung</span>
+        <span style="font-weight:700;color:var(--c-yellow)">Thanh toan cau long - {{ user.get_display_name }}</span></div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card"><div class="card-pad">
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Số tiền chuyển khoản (đ) *</label>
+        <input name="amount" type="number" class="form-control" value="{{ wallet.debt|floatformat:0 }}" min="1000" step="1000" required></div>
+        <div class="form-group"><label class="form-label">Phương thức</label>
+        <select name="method" class="form-control">
+          <option value="transfer">Chuyển khoản ngân hàng</option>
+          <option value="cash">Tiền mặt</option>
+        </select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Ảnh biên lai (tùy chọn)</label>
+      <input name="receipt_image" type="file" class="form-control" accept="image/*"></div>
+      <div class="form-group"><label class="form-label">Ghi chú</label>
+      <textarea name="note" class="form-control" rows="2" placeholder="Ghi chú thêm..."></textarea></div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-blue btn-lg">📤 Gửi thông báo cho chủ nhóm</button>
+        <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary btn-lg">Hủy</a>
+      </div>
+    </form>
+  </div></div>
+</div>{% endblock %}

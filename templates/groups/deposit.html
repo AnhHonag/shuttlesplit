@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% block title %}Ghi nhận nạp tiền{% endblock %}
+{% block content %}<div class="wrap-sm">
+  <div class="page-header"><div class="page-title">💰 Ghi nhận nạp tiền</div>
+  <div class="page-sub">Nhóm: {{ group.name }}</div></div>
+  <div class="card"><div class="card-pad">
+    <form method="post">{% csrf_token %}
+      <div class="form-group"><label class="form-label">Thành viên *</label>
+      <select name="user_id" class="form-control" required>
+        <option value="">-- Chọn thành viên --</option>
+        {% for m in members %}<option value="{{ m.user.pk }}">{{ m.user.get_display_name }}</option>{% endfor %}
+      </select></div>
+      <div class="form-group"><label class="form-label">Số tiền nạp (VNĐ) *</label>
+      <input name="amount" type="number" class="form-control" placeholder="500000" min="1000" step="1000" required></div>
+      <div class="form-group"><label class="form-label">Ghi chú</label>
+      <input name="description" class="form-control" placeholder="VD: Nạp tiền tháng 6" value="Nạp tiền"></div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary btn-lg">✅ Ghi nhận</button>
+        <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary btn-lg">Hủy</a>
+      </div>
+    </form>
+  </div></div>
+</div>{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}{% block title %}Hồ sơ{% endblock %}
+{% block content %}<div class="wrap-sm">
+  <div class="page-header"><div class="page-title">👤 Hồ sơ cá nhân</div></div>
+  <div class="card"><div class="card-pad">
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Họ tên</label>
+        <input name="full_name" class="form-control" value="{{ user.full_name }}"></div>
+        <div class="form-group"><label class="form-label">Email</label>
+        <input name="email" type="email" class="form-control" value="{{ user.email }}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Số điện thoại</label>
+        <input name="phone" class="form-control" value="{{ user.phone }}"></div>
+        <div class="form-group"><label class="form-label">Tên đăng nhập (không đổi được)</label>
+        <input class="form-control" value="{{ user.username }}" disabled></div>
+      </div>
+      <div class="form-group"><label class="form-label">Mật khẩu mới (để trống nếu không đổi)</label>
+      <input name="new_password" type="password" class="form-control"></div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Hủy</a>
+      </div>
+    </form>
+  </div></div>
+</div>{% endblock %}

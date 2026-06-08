@@ -1,0 +1,85 @@
+{% extends 'base.html' %}{% block title %}Buổi chơi {{ session.date }}{% endblock %}
+{% block content %}<div class="wrap">
+  <div class="page-header flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <div class="page-title">📅 Buổi chơi {{ session.date }}</div>
+      <div class="page-sub">{{ session.group.name }}{% if session.location %} · 📍 {{ session.location }}{% endif %}</div>
+    </div>
+    <div class="flex gap-2">
+      {% if is_host %}<a href="{% url 'edit_session' session.pk %}" class="btn btn-secondary">✏️ Sửa</a>{% endif %}
+      <a href="{% url 'group_detail' session.group.pk %}" class="btn btn-ghost">← Quay lại</a>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- FEE BREAKDOWN -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">💰 Chi phí</span></div>
+      <div class="card-pad">
+        <div class="fee-box">
+          <div class="fee-line"><span>🏟 Tiền sân</span><span class="fee-amt">{{ session.court_fee|floatformat:0 }}đ</span></div>
+          <div class="fee-line"><span>🏸 Tiền cầu</span><span class="fee-amt">{{ session.shuttle_fee|floatformat:0 }}đ</span></div>
+          <div class="fee-line"><span>💧 Tiền nước</span><span class="fee-amt">{{ session.water_fee|floatformat:0 }}đ</span></div>
+          {% if session.other_fee > 0 %}
+          <div class="fee-line"><span>📌 {{ session.other_fee_note|default:"Chi phí khác" }}</span><span class="fee-amt">{{ session.other_fee|floatformat:0 }}đ</span></div>
+          {% endif %}
+          <div class="fee-line"><span>Tổng cộng</span><span class="fee-amt text-green">{{ session.total_fee|floatformat:0 }}đ</span></div>
+        </div>
+        <div style="background:var(--c-red-light);border-radius:10px;padding:16px;margin-top:12px;text-align:center">
+          <div style="font-size:12px;font-weight:700;color:var(--c-red);text-transform:uppercase;letter-spacing:.5px">Mỗi người đóng</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:32px;color:var(--c-red)">{{ session.fee_per_person|floatformat:0 }}đ</div>
+          <div style="font-size:12px;color:var(--c-ink-2)">{{ session.participants.count }} người tham gia</div>
+        </div>
+        {% if session.note %}
+        <div class="mt-4" style="padding:12px;background:var(--c-bg);border-radius:8px;font-size:13.5px;color:var(--c-ink-2)">
+          📝 {{ session.note }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- MY STATUS (if member) -->
+    {% if my_participation %}
+    <div class="card">
+      <div class="card-header"><span class="card-title">👤 Phần của tôi</span></div>
+      <div class="card-pad" style="text-align:center;padding:32px">
+        <div style="font-size:48px;margin-bottom:12px">🏸</div>
+        <div style="font-size:14px;color:var(--c-ink-2);margin-bottom:4px">Bạn tham gia buổi này</div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:800;color:var(--c-red);margin-bottom:16px">
+          {{ my_participation.amount_owed|floatformat:0 }}đ
+        </div>
+        <p class="text-sm text-muted">Số tiền này đã được tự động trừ vào số dư ví của bạn.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- PARTICIPANTS -->
+  <div class="card mt-6" style="margin-top:24px">
+    <div class="card-header"><span class="card-title">👥 Danh sách tham gia ({{ participants|length }} người)</span></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Thành viên</th><th>Số tiền</th><th>Số dư sau buổi</th></tr></thead>
+      <tbody>
+        {% for p in participants %}
+        <tr {% if p.user == request.user %}style="background:#F0FDF4"{% endif %}>
+          <td><div class="flex items-center gap-2">
+            <div class="avatar avatar-sm">{{ p.user.get_display_name|slice:":1"|upper }}</div>
+            <div><div class="font-bold">{{ p.user.get_display_name }}
+              {% if p.user == request.user %}<span class="badge badge-green" style="margin-left:4px">Tôi</span>{% endif %}
+            </div>
+            <div class="text-xs text-muted">@{{ p.user.username }}</div></div>
+          </div></td>
+          <td><span class="money text-red">{{ p.amount_owed|floatformat:0 }}đ</span></td>
+          <td>
+            {% with wallet=p.user.wallets.all|first %}
+            <span class="badge {% if wallet and wallet.balance >= 0 %}badge-green{% else %}badge-red{% endif %}">
+              {% if wallet %}{{ wallet.balance|floatformat:0 }}đ{% else %}—{% endif %}
+            </span>
+            {% endwith %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</div>{% endblock %}

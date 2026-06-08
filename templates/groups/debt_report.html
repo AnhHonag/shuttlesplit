@@ -1,0 +1,100 @@
+{% extends 'base.html' %}{% block title %}Báo cáo công nợ — {{ group.name }}{% endblock %}
+{% block content %}<div class="wrap">
+  <div class="page-header flex items-center justify-between">
+    <div><div class="page-title">📊 Báo cáo công nợ</div>
+    <div class="page-sub">{{ group.name }}</div></div>
+    <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary">← Quay lại</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Tình trạng từng thành viên</span></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Thành viên</th><th>Tổng đã nạp</th><th>Tổng đã dùng</th><th>Số dư</th><th>Công nợ</th><th>Trạng thái</th>{% if is_host %}<th>Thao tác</th>{% endif %}</tr></thead>
+      <tbody>
+        {% for item in member_data %}
+        <tr>
+          <td><div class="flex items-center gap-2">
+            <div class="avatar avatar-sm">{{ item.member.user.get_display_name|slice:":1"|upper }}</div>
+            <div><div class="font-bold">{{ item.member.user.get_display_name }}</div>
+            <div class="text-xs text-muted">@{{ item.member.user.username }}</div></div>
+          </div></td>
+          <td><span class="money text-green">{{ item.wallet.total_deposited|floatformat:0 }}đ</span></td>
+          <td><span class="money">{{ item.wallet.total_spent|floatformat:0 }}đ</span></td>
+          <td>
+            <span class="money {% if item.wallet.balance >= 0 %}text-green{% else %}text-red{% endif %}">
+              {{ item.wallet.balance|floatformat:0 }}đ
+            </span>
+          </td>
+          <td>
+            {% if item.wallet.debt > 0 %}
+            <span class="money text-red">{{ item.wallet.debt|floatformat:0 }}đ</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {% if item.wallet.balance >= 0 %}
+            <span class="badge badge-green">✅ Sạch nợ</span>
+            {% else %}
+            <span class="badge badge-red">❌ Đang nợ</span>
+            {% endif %}
+          </td>
+          {% if is_host %}
+          <td style="white-space:nowrap">
+            <a href="{% url 'wallet_detail' group.pk %}?user={{ item.member.user.pk }}" class="btn btn-sm btn-ghost">Lịch sử</a>
+            {% if item.wallet.debt > 0 %}
+            <a href="{% url 'host_record_payment' group.pk item.member.pk %}" class="btn btn-sm btn-primary"
+              title="Ghi nhận {{ item.member.user.get_display_name }} đã thanh toán">
+              ✅ Đã trả
+            </a>
+            <form method="post" action="{% url 'send_debt_reminder' group.pk item.member.pk %}" style="display:inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-yellow" title="Gửi email nhắc nợ {{ item.wallet.debt|floatformat:0 }}đ">
+                📧 Nhắc nợ
+              </button>
+            </form>
+            {% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- INDIVIDUAL TRANSACTION HISTORY -->
+  {% if is_host %}
+  <div class="mt-6" style="margin-top:28px">
+    <h2 style="font-weight:800;font-size:18px;margin-bottom:16px">Giao dịch gần đây theo thành viên</h2>
+    {% for item in member_data %}
+    {% if item.recent_transactions %}
+    <div class="card mb-4" style="margin-bottom:16px">
+      <div class="card-header">
+        <div class="flex items-center gap-2">
+          <div class="avatar avatar-sm">{{ item.member.user.get_display_name|slice:":1"|upper }}</div>
+          <span class="card-title">{{ item.member.user.get_display_name }}</span>
+        </div>
+        <span class="money {% if item.wallet.balance >= 0 %}text-green{% else %}text-red{% endif %}">
+          {{ item.wallet.balance|floatformat:0 }}đ
+        </span>
+      </div>
+      <div class="card-pad" style="padding-top:8px">
+        {% for tx in item.recent_transactions %}
+        <div class="tx-row">
+          <div class="tx-icon {% if tx.transaction_type == 'deposit' or tx.transaction_type == 'debt_paid' %}in{% else %}out{% endif %}">
+            {% if tx.transaction_type == 'deposit' %}💰{% elif tx.transaction_type == 'deduct' %}🏸{% elif tx.transaction_type == 'debt_paid' %}✅{% else %}↩️{% endif %}
+          </div>
+          <div class="tx-body">
+            <div class="tx-desc">{{ tx.description|default:tx.get_transaction_type_display }}</div>
+            <div class="tx-date">{{ tx.created_at|date:"d/m/Y H:i" }}</div>
+          </div>
+          <div class="tx-amt {% if tx.transaction_type == 'deposit' or tx.transaction_type == 'debt_paid' %}in{% else %}out{% endif %}">
+            {% if tx.transaction_type == 'deposit' or tx.transaction_type == 'debt_paid' %}+{% else %}-{% endif %}{{ tx.amount|floatformat:0 }}đ
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>{% endblock %}

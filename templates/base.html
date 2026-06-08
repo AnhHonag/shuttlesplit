@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}ShuttleSplit{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'css/main.css' %}">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+{% block nav_block %}
+<nav class="topnav">
+  <a href="{% url 'dashboard' %}" class="nav-brand">🏸 <em>Shuttle</em>Split</a>
+  <div class="nav-links">
+    {% if user.is_authenticated %}
+      <div class="nav-user">
+        <div class="uavatar">{{ user.get_display_name|slice:":1"|upper }}</div>
+        {{ user.get_display_name }}
+      </div>
+      <a href="{% url 'dashboard' %}">Tổng quan</a>
+      <a href="{% url 'my_sessions' %}">Lịch sử</a>
+      <a href="{% url 'my_payments' %}">Thanh toán</a>
+      <a href="{% url 'profile' %}">Hồ sơ</a>
+      <a href="{% url 'logout' %}" class="nav-cta">Đăng xuất</a>
+    {% else %}
+      <a href="{% url 'login' %}" class="nav-cta">Đăng nhập</a>
+    {% endif %}
+  </div>
+</nav>
+{% endblock %}
+
+<div id="flash-container">
+  {% if messages %}
+  <div style="max-width:1100px;margin:16px auto;padding:0 20px">
+    <ul class="flash-list">
+      {% for msg in messages %}
+      <li class="flash {{ msg.tags }}">
+        {% if msg.tags == 'success' %}✅{% elif msg.tags == 'error' %}❌{% elif msg.tags == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+        {{ msg }}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+
+{% block content %}{% endblock %}
+{% block extra_js %}{% endblock %}
+</body>
+</html>

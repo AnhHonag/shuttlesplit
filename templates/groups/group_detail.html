@@ -1,0 +1,155 @@
+{% extends 'base.html' %}{% block title %}{{ group.name }}{% endblock %}
+{% block content %}<div class="wrap">
+  <div class="page-header flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <div class="page-title">🏸 {{ group.name }}</div>
+      <div class="page-sub">{{ group.description|default:"" }}</div>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+      {% if is_host %}
+      <a href="{% url 'create_session' group.pk %}" class="btn btn-primary">+ Tạo buổi chơi</a>
+      <a href="{% url 'add_member' group.pk %}" class="btn btn-secondary">+ Thêm thành viên</a>
+      <a href="{% url 'deposit' group.pk %}" class="btn btn-yellow">💰 Nạp tiền</a>
+      <a href="{% url 'group_settings' group.pk %}" class="btn btn-ghost">⚙️ Cài đặt</a>
+      {% else %}
+      <a href="{% url 'submit_payment' group.pk %}" class="btn btn-blue">💳 Thanh toán</a>
+      {% endif %}
+      <a href="{% url 'debt_report' group.pk %}" class="btn btn-ghost">📊 Báo cáo</a>
+    </div>
+  </div>
+
+  <!-- INVITE CODE (HOST ONLY) -->
+  {% if is_host %}
+  <div style="margin-bottom:24px">
+    <div class="invite-chip">
+      <span style="font-size:13px;color:rgba(255,255,255,.6)">Mã mời:</span>
+      <span class="invite-code">{{ group.invite_code }}</span>
+      <span style="font-size:12px;color:rgba(255,255,255,.4)">Chia sẻ cho thành viên mới</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- MY WALLET SUMMARY -->
+  <div class="stats-row" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+    <div class="stat {% if my_wallet.balance < 0 %}red{% else %}green{% endif %}">
+      <div class="stat-val">{{ my_wallet.balance|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Số dư của tôi</div>
+    </div>
+    <div class="stat {% if my_wallet.debt > 0 %}red{% else %}green{% endif %}">
+      <div class="stat-val">{{ my_wallet.debt|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Công nợ của tôi</div>
+    </div>
+    <div class="stat blue">
+      <div class="stat-val">{{ my_wallet.total_deposited|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Tổng đã nạp</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">{{ my_wallet.total_spent|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Tổng đã dùng</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- MEMBERS -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">👥 Thành viên ({{ members|length }})</span>
+        {% if is_host %}<a href="{% url 'add_member' group.pk %}" class="btn btn-sm btn-primary">+ Thêm</a>{% endif %}
+      </div>
+      <div class="card-pad" style="padding-top:8px">
+        {% for item in member_data %}
+        <div class="flex items-center gap-3" style="padding:10px 0;border-bottom:1px solid var(--c-border)">
+          <div class="avatar">{{ item.member.user.get_display_name|slice:":1"|upper }}</div>
+          <div style="flex:1;min-width:0">
+            <div class="font-bold text-sm">{{ item.member.user.get_display_name }}
+              {% if item.member.is_host %}<span class="badge badge-green" style="margin-left:4px">👑 Chủ</span>{% endif %}
+            </div>
+            <div class="text-xs text-muted">@{{ item.member.user.username }}</div>
+          </div>
+          <div style="text-align:right">
+            {% if item.wallet.balance >= 0 %}
+            <div class="money text-green text-sm">+{{ item.wallet.balance|floatformat:0 }}đ</div>
+            <div class="text-xs badge badge-green">Dư</div>
+            {% else %}
+            <div class="money text-red text-sm">{{ item.wallet.balance|floatformat:0 }}đ</div>
+            <div class="text-xs badge badge-red">Nợ {{ item.wallet.debt|floatformat:0 }}đ</div>
+            {% endif %}
+          </div>
+          {% if is_host %}
+          <div class="flex gap-1">
+            <a href="{% url 'edit_member' group.pk item.member.pk %}" class="btn btn-sm btn-ghost" style="padding:4px 8px">✏️</a>
+            {% if item.wallet.debt > 0 %}
+            <a href="{% url 'host_record_payment' group.pk item.member.pk %}"
+              class="btn btn-sm btn-primary" style="padding:4px 8px"
+              title="Ghi nhận đã trả {{ item.wallet.debt|floatformat:0 }}đ">✅</a>
+            <form method="post" action="{% url 'send_debt_reminder' group.pk item.member.pk %}" style="display:inline">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="group_detail">
+              <button type="submit" class="btn btn-sm btn-yellow" style="padding:4px 8px" title="Nhắc nợ {{ item.wallet.debt|floatformat:0 }}đ">📧</button>
+            </form>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- SESSIONS -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📅 Buổi chơi gần đây</span>
+        {% if is_host %}<a href="{% url 'create_session' group.pk %}" class="btn btn-sm btn-primary">+ Tạo</a>{% endif %}
+      </div>
+      {% if sessions %}
+      <div class="card-pad" style="padding-top:8px">
+        {% for s in sessions %}
+        <a href="{% url 'session_detail' s.pk %}" style="text-decoration:none;color:inherit">
+        <div class="flex items-center gap-3" style="padding:10px 0;border-bottom:1px solid var(--c-border)">
+          <div style="background:var(--c-green-light);border-radius:8px;padding:8px;text-align:center;min-width:50px">
+            <div style="font-size:11px;font-weight:700;color:var(--c-green)">{{ s.date|date:"M" }}</div>
+            <div style="font-size:18px;font-weight:800;line-height:1;color:var(--c-ink)">{{ s.date|date:"d" }}</div>
+          </div>
+          <div style="flex:1">
+            <div class="font-bold text-sm">{{ s.location|default:"Chưa có địa điểm" }}</div>
+            <div class="text-xs text-muted">{{ s.participants.count }} người tham gia</div>
+          </div>
+          <div style="text-align:right">
+            <div class="money text-sm">{{ s.total_fee|floatformat:0 }}đ</div>
+            <div class="text-xs text-muted">{{ s.fee_per_person|floatformat:0 }}đ/người</div>
+          </div>
+        </div></a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty" style="padding:32px"><div class="empty-icon">📅</div><p>Chưa có buổi chơi</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if is_host %}
+  <!-- TOTAL DEBT SUMMARY -->
+  <div class="card mt-6">
+    <div class="card-header">
+      <span class="card-title">💸 Tổng công nợ nhóm</span>
+      <a href="{% url 'payment_list' group.pk %}" class="btn btn-sm btn-ghost">Xem thanh toán</a>
+    </div>
+    <div class="card-pad">
+      <div class="stats-row" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:0">
+        <div class="stat red">
+          <div class="stat-val">{{ total_debt|floatformat:0 }}đ</div>
+          <div class="stat-lbl">Tổng nợ nhóm</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">{{ group.sessions.count }}</div>
+          <div class="stat-lbl">Tổng buổi chơi</div>
+        </div>
+        <div class="stat blue">
+          <div class="stat-val">{{ members|length }}</div>
+          <div class="stat-lbl">Thành viên</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}{% block title %}Lịch sử tham gia{% endblock %}
+{% block content %}<div class="wrap">
+  <div class="page-header"><div class="page-title">📅 Lịch sử tham gia</div></div>
+  {% if participations %}
+  <div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>Nhóm</th><th>Ngày</th><th>Địa điểm</th><th>Số người</th><th>Tổng chi phí</th><th>Phần của tôi</th><th></th></tr></thead>
+    <tbody>
+      {% for p in participations %}
+      <tr>
+        <td class="font-bold">{{ p.session.group.name }}</td>
+        <td>{{ p.session.date }}</td>
+        <td class="text-muted">{{ p.session.location|default:"—" }}</td>
+        <td>{{ p.session.participants.count }} người</td>
+        <td><span class="money">{{ p.session.total_fee|floatformat:0 }}đ</span></td>
+        <td><span class="money text-red">{{ p.amount_owed|floatformat:0 }}đ</span></td>
+        <td><a href="{% url 'session_detail' p.session.pk %}" class="btn btn-sm btn-ghost">Xem</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div></div>
+  {% else %}
+  <div class="card"><div class="empty"><div class="empty-icon">📅</div><h3>Chưa tham gia buổi chơi nào</h3></div></div>
+  {% endif %}
+</div>{% endblock %}

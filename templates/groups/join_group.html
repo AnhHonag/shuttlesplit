@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block title %}Tham gia nhóm{% endblock %}
+{% block content %}<div class="wrap-sm">
+  <div class="page-header"><div class="page-title">🔑 Tham gia nhóm</div>
+  <div class="page-sub">Nhập mã mời do chủ nhóm cung cấp</div></div>
+  <div class="card"><div class="card-pad">
+    <form method="post">{% csrf_token %}
+      <div class="form-group"><label class="form-label">Mã mời</label>
+      <input name="invite_code" class="form-control" placeholder="ABCD1234"
+        style="font-size:22px;font-weight:800;letter-spacing:4px;text-transform:uppercase;text-align:center"
+        maxlength="8" autofocus required></div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary btn-lg">Tham gia</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-lg">Hủy</a>
+      </div>
+    </form>
+  </div></div>
+</div>{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% block title %}Thêm thành viên{% endblock %}
+{% block content %}<div class="wrap-sm">
+  <div class="page-header"><div class="page-title">➕ Thêm thành viên</div>
+  <div class="page-sub">Tạo tài khoản và thêm vào nhóm <strong>{{ group.name }}</strong></div></div>
+  <div class="card"><div class="card-pad">
+    <form method="post">{% csrf_token %}
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Họ tên *</label>
+        <input name="full_name" class="form-control" placeholder="Nguyễn Văn A" required autofocus></div>
+        <div class="form-group"><label class="form-label">Tên đăng nhập *</label>
+        <input name="username" class="form-control" placeholder="nguyenvana" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label>
+        <input name="email" type="email" class="form-control" placeholder="email@example.com">
+        <div class="form-hint">Dùng để nhận email nhắc nợ</div></div>
+        <div class="form-group"><label class="form-label">Số điện thoại</label>
+        <input name="phone" class="form-control" placeholder="0912345678"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Mật khẩu *</label>
+      <input name="password" type="password" class="form-control" required></div>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary btn-lg">Tạo tài khoản & Thêm</button>
+        <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary btn-lg">Hủy</a>
+      </div>
+    </form>
+  </div></div>
+  <div class="card mt-4" style="margin-top:16px"><div class="card-pad">
+    <p class="text-sm font-bold" style="margin-bottom:8px">💡 Hoặc chia sẻ mã mời</p>
+    <p class="text-sm text-muted" style="margin-bottom:12px">Thành viên tự đăng ký tài khoản (nếu có) rồi dùng mã:</p>
+    <div class="invite-chip"><span class="invite-code">{{ group.invite_code }}</span></div>
+  </div></div>
+</div>{% endblock %}

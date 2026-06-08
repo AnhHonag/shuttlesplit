@@ -1,0 +1,43 @@
+{% extends 'base.html' %}{% block title %}Sửa buổi chơi{% endblock %}
+{% block content %}<div class="wrap-md">
+  <div class="page-header"><div class="page-title">✏️ Sửa buổi chơi</div></div>
+  <form method="post">{% csrf_token %}
+    <div class="card mb-4" style="margin-bottom:16px"><div class="card-pad">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Ngày chơi</label>
+        <input type="date" name="date" class="form-control" value="{{ session.date|date:'Y-m-d' }}"></div>
+        <div class="form-group"><label class="form-label">Địa điểm</label>
+        <input name="location" class="form-control" value="{{ session.location }}"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Tiền sân</label>
+        <input type="number" name="court_fee" class="form-control" value="{{ session.court_fee }}" step="1000"></div>
+        <div class="form-group"><label class="form-label">Tiền cầu</label>
+        <input type="number" name="shuttle_fee" class="form-control" value="{{ session.shuttle_fee }}" step="1000"></div>
+        <div class="form-group"><label class="form-label">Tiền nước</label>
+        <input type="number" name="water_fee" class="form-control" value="{{ session.water_fee }}" step="1000"></div>
+      </div>
+    </div></div>
+    <div class="card mb-4" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title">👥 Cập nhật thành viên tham gia</span></div>
+      <div class="card-pad">
+        <div class="member-grid">
+          {% for m in all_members %}
+          <label class="member-chk {% if m.user.pk in current_participant_ids %}is-checked{% endif %}">
+            <input type="checkbox" name="participants" value="{{ m.user.pk }}"
+              {% if m.user.pk in current_participant_ids %}checked{% endif %}
+              onchange="this.closest('.member-chk').classList.toggle('is-checked',this.checked)">
+            <div class="avatar avatar-sm">{{ m.user.get_display_name|slice:":1"|upper }}</div>
+            <span class="member-name">{{ m.user.get_display_name }}</span>
+          </label>
+          {% endfor %}
+        </div>
+        <p class="text-sm text-muted mt-2" style="margin-top:10px">⚠️ Cập nhật thành viên sẽ hoàn tiền cũ và tính lại chi phí mới</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary btn-lg">Lưu thay đổi</button>
+      <a href="{% url 'session_detail' session.pk %}" class="btn btn-secondary btn-lg">Hủy</a>
+    </div>
+  </form>
+</div>{% endblock %}

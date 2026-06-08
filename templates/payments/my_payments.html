@@ -1,0 +1,24 @@
+{% extends 'base.html' %}{% block title %}Lịch sử thanh toán{% endblock %}
+{% block content %}<div class="wrap">
+  <div class="page-header"><div class="page-title">💳 Lịch sử thanh toán</div></div>
+  {% if payments %}
+  <div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>Nhóm</th><th>Số tiền</th><th>Ngày gửi</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead>
+    <tbody>
+      {% for p in payments %}
+      <tr>
+        <td class="font-bold">{{ p.group.name }}</td>
+        <td><span class="money text-green">{{ p.amount|floatformat:0 }}đ</span></td>
+        <td class="text-muted">{{ p.created_at|date:"d/m/Y" }}</td>
+        <td>{% if p.status == 'confirmed' %}<span class="badge badge-green">✅ Xác nhận</span>
+        {% elif p.status == 'rejected' %}<span class="badge badge-red">❌ Từ chối</span>
+        {% else %}<span class="badge badge-yellow">⏳ Chờ</span>{% endif %}</td>
+        <td class="text-muted">{{ p.note|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div></div>
+  {% else %}
+  <div class="card"><div class="empty"><div class="empty-icon">💳</div><h3>Chưa có lịch sử thanh toán</h3></div></div>
+  {% endif %}
+</div>{% endblock %}
