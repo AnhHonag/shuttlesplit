@@ -1,7 +1,36 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+
+User = get_user_model()
+
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name', '').strip()
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        password = request.POST.get('password', '')
+        password2 = request.POST.get('password2', '')
+        if not username or not password:
+            messages.error(request, 'Tên đăng nhập và mật khẩu không được để trống')
+        elif password != password2:
+            messages.error(request, 'Mật khẩu xác nhận không khớp')
+        elif User.objects.filter(username=username).exists():
+            messages.error(request, f'Tên đăng nhập "{username}" đã được sử dụng')
+        else:
+            user = User.objects.create_user(
+                username=username, password=password,
+                full_name=full_name, email=email, phone=phone,
+            )
+            login(request, user)
+            messages.success(request, f'Chào mừng {user.get_display_name()} đến với ShuttleSplit!')
+            return redirect('dashboard')
+    return render(request, 'accounts/register.html')
 
 
 def login_view(request):
