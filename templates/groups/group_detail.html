@@ -99,7 +99,10 @@
     <div class="card">
       <div class="card-header">
         <span class="card-title">📅 Buổi chơi gần đây</span>
-        {% if is_host %}<a href="{% url 'create_session' group.pk %}" class="btn btn-sm btn-primary">+ Tạo</a>{% endif %}
+        <div class="flex gap-2">
+          <a href="{% url 'session_list' group.pk %}" class="btn btn-sm btn-ghost">Xem tất cả</a>
+          {% if is_host %}<a href="{% url 'create_session' group.pk %}" class="btn btn-sm btn-primary">+ Tạo</a>{% endif %}
+        </div>
       </div>
       {% if sessions %}
       <div class="card-pad" style="padding-top:8px">

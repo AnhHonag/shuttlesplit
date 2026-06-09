@@ -107,6 +107,69 @@ def edit_session(request, pk):
 
 
 @login_required
+def session_list(request, group_pk):
+    """Tất cả buổi chơi của nhóm, nhóm theo tháng"""
+    group = get_object_or_404(Group, pk=group_pk)
+    membership = get_object_or_404(GroupMember, group=group, user=request.user, is_active=True)
+    is_host = membership.is_host
+
+    from itertools import groupby
+    from decimal import Decimal
+
+    all_sessions = list(
+        BadmintonSession.objects.filter(group=group)
+        .prefetch_related('participants')
+        .order_by('-date', '-created_at')
+    )
+    for s in all_sessions:
+        s.num_participants = len(s.participants.all())
+        s.fpp = (s.total_fee / s.num_participants).quantize(Decimal('1')) if s.num_participants else Decimal('0')
+
+    years = sorted({s.date.year for s in all_sessions}, reverse=True)
+
+    selected_year = None
+    try:
+        y = int(request.GET.get('year', ''))
+        if y in years:
+            selected_year = y
+    except (ValueError, TypeError):
+        pass
+    if not selected_year and years:
+        selected_year = years[0]
+
+    filtered = [s for s in all_sessions if not selected_year or s.date.year == selected_year]
+
+    VI_MONTHS = ['', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5',
+                 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12']
+
+    monthly_data = []
+    for (yr, mo), grp in groupby(filtered, key=lambda s: (s.date.year, s.date.month)):
+        ms = list(grp)
+        monthly_data.append({
+            'label': f"{VI_MONTHS[mo]} năm {yr}",
+            'month': mo,
+            'year': yr,
+            'sessions': ms,
+            'count': len(ms),
+            'total_fee': sum(s.total_fee for s in ms),
+            'total_participants': sum(s.num_participants for s in ms),
+        })
+
+    year_total_sessions = sum(m['count'] for m in monthly_data)
+    year_total_fee = sum(m['total_fee'] for m in monthly_data)
+
+    return render(request, 'sessions_app/session_list.html', {
+        'group': group,
+        'is_host': is_host,
+        'monthly_data': monthly_data,
+        'years': years,
+        'selected_year': selected_year,
+        'year_total_sessions': year_total_sessions,
+        'year_total_fee': year_total_fee,
+    })
+
+
+@login_required
 def my_sessions(request):
     """Lịch sử tham gia của thành viên"""
     from wallet.models import Wallet

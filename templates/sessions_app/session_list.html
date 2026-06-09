@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Buổi chơi — {{ group.name }}{% endblock %}
+{% block content %}
+<div class="wrap">
+
+  <div class="page-header flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <div class="page-title">📅 Buổi chơi — {{ group.name }}</div>
+      <div class="page-sub">Thống kê và quản lý theo tháng</div>
+    </div>
+    <div class="flex gap-2">
+      {% if is_host %}
+      <a href="{% url 'create_session' group.pk %}" class="btn btn-primary">+ Tạo buổi chơi</a>
+      {% endif %}
+      <a href="{% url 'group_detail' group.pk %}" class="btn btn-ghost">← Nhóm</a>
+    </div>
+  </div>
+
+  <!-- Year tabs -->
+  {% if years %}
+  <div class="tab-bar">
+    {% for yr in years %}
+    <a href="?year={{ yr }}" class="tab-link {% if yr == selected_year %}active{% endif %}">{{ yr }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Annual summary -->
+  {% if monthly_data %}
+  <div class="stats-row">
+    <div class="stat blue">
+      <div class="stat-val">{{ year_total_sessions }}</div>
+      <div class="stat-lbl">Buổi chơi{% if selected_year %} {{ selected_year }}{% endif %}</div>
+    </div>
+    <div class="stat green">
+      <div class="stat-val">{{ year_total_fee|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Tổng chi phí</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">{{ monthly_data|length }}</div>
+      <div class="stat-lbl">Tháng có buổi chơi</div>
+    </div>
+    <div class="stat yellow">
+      {% if year_total_sessions > 0 %}
+      <div class="stat-val">{{ year_total_fee|floatformat:0 }}đ</div>
+      {% else %}
+      <div class="stat-val">0đ</div>
+      {% endif %}
+      <div class="stat-lbl">Tổng chi phí cả năm</div>
+    </div>
+  </div>
+
+  <!-- Monthly sections -->
+  {% for m in monthly_data %}
+  <div style="margin-bottom:28px">
+
+    <!-- Month header -->
+    <div class="month-header">
+      <div class="month-title">{{ m.label }}</div>
+      <div class="month-meta">
+        <span>{{ m.count }} buổi</span>
+        <span>·</span>
+        <span class="money">{{ m.total_fee|floatformat:0 }}đ</span>
+      </div>
+    </div>
+
+    <!-- Monthly stats bar -->
+    <div style="display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="background:var(--c-green-light);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--c-green);font-weight:700">
+        🏸 {{ m.count }} buổi
+      </div>
+      <div style="background:var(--c-blue-light);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--c-blue);font-weight:700">
+        💰 <span class="money">{{ m.total_fee|floatformat:0 }}đ</span> tổng chi phí
+      </div>
+      <div style="background:var(--c-bg);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--c-ink-2);font-weight:600;border:1px solid var(--c-border)">
+        👥 {{ m.total_participants }} lượt tham gia
+      </div>
+    </div>
+
+    <!-- Sessions list -->
+    <div class="card">
+      {% for s in m.sessions %}
+      <a href="{% url 'session_detail' s.pk %}" class="session-row">
+        <div class="session-date-box">
+          <div class="dow">{{ s.date|date:"D" }}</div>
+          <div class="day">{{ s.date|date:"d" }}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="font-bold text-sm">{{ s.location|default:"Chưa có địa điểm" }}</div>
+          <div class="text-xs text-muted" style="margin-top:2px">
+            {{ s.date|date:"d/m/Y" }}
+            · {{ s.num_participants }} người tham gia
+            {% if s.note %} · 📝 {{ s.note|truncatechars:30 }}{% endif %}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="money text-sm">{{ s.total_fee|floatformat:0 }}đ</div>
+          <div class="text-xs text-muted">{{ s.fpp|floatformat:0 }}đ/người</div>
+        </div>
+        <span style="color:var(--c-ink-3);margin-left:4px">›</span>
+      </a>
+      {% endfor %}
+    </div>
+
+  </div>
+  {% endfor %}
+
+  {% else %}
+  <div class="card"><div class="empty">
+    <div class="empty-icon">📅</div>
+    <h3>Chưa có buổi chơi nào{% if selected_year %} trong năm {{ selected_year }}{% endif %}</h3>
+    <p>Bắt đầu tạo buổi chơi để theo dõi lịch sử.</p>
+    {% if is_host %}
+    <a href="{% url 'create_session' group.pk %}" class="btn btn-primary">+ Tạo buổi chơi</a>
+    {% endif %}
+  </div></div>
+  {% endif %}
+
+</div>
+{% endblock %}

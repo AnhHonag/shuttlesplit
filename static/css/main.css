@@ -128,5 +128,22 @@ tbody tr:hover td{background:#F8FDF9}
 .tx-body{flex:1}.tx-desc{font-size:13.5px;font-weight:600;color:var(--c-ink)}.tx-date{font-size:12px;color:var(--c-ink-3);margin-top:2px}
 .tx-amt{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:800;white-space:nowrap;letter-spacing:-.3px}
 .tx-amt.in{color:var(--c-green)}.tx-amt.out{color:var(--c-red)}
+/* ── TABS ── */
+.tab-bar{display:flex;gap:4px;background:var(--c-white);border:1px solid var(--c-border);border-radius:var(--radius);padding:6px;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn,.tab-link{flex:1;min-width:80px;padding:9px 16px;border:none;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;background:transparent;color:var(--c-ink-2);transition:all .15s;text-decoration:none;text-align:center;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center}
+.tab-btn.active,.tab-link.active{background:var(--c-green);color:#fff}
+.tab-btn:hover:not(.active),.tab-link:hover:not(.active){background:var(--c-bg);color:var(--c-ink)}
+/* ── MONTH HEADER ── */
+.month-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px}
+.month-title{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:800;color:var(--c-ink)}
+.month-meta{display:flex;gap:16px;font-size:13px;color:var(--c-ink-2)}
+.month-meta .money{font-size:13px}
+/* ── SESSION ROW ── */
+.session-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--c-border);text-decoration:none;color:inherit;transition:background .12s}
+.session-row:last-child{border:none}
+.session-row:hover{background:#F0FDF4}
+.session-date-box{background:var(--c-green-light);border-radius:8px;padding:8px 10px;text-align:center;min-width:50px;flex-shrink:0}
+.session-date-box .dow{font-size:10px;font-weight:700;color:var(--c-green);text-transform:uppercase}
+.session-date-box .day{font-size:20px;font-weight:800;line-height:1.1;color:var(--c-ink)}
 /* ── RESPONSIVE ── */
 @media(max-width:640px){.two-col,.form-row,.form-row-3{grid-template-columns:1fr}.page-title{font-size:22px}.stats-row{grid-template-columns:1fr 1fr}.stat-val{font-size:22px}}
