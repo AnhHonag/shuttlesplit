@@ -49,14 +49,21 @@
 {% block extra_js %}{% endblock %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.money').forEach(el => {
-    const raw = el.textContent.trim();
-    const m = raw.match(/^([+]?)(-?\d+)(đ?)$/);
-    if (!m) return;
-    const sign = m[1];
-    const num = parseInt(m[2]);
-    if (isNaN(num)) return;
-    el.textContent = sign + num.toLocaleString('vi-VN') + 'đ';
+  const fmt = n => parseInt(n).toLocaleString('vi-VN');
+  const reVND = /(-?\d{4,})đ/g;
+
+  // Format text nodes inside target elements
+  const targets = document.querySelectorAll(
+    '.money, .stat-val, .tx-amt, .fee-amt, .fee-line'
+  );
+  targets.forEach(el => {
+    const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let n;
+    while ((n = walk.nextNode())) nodes.push(n);
+    nodes.forEach(n => {
+      n.textContent = n.textContent.replace(reVND, (_, num) => fmt(num) + 'đ');
+    });
   });
 });
 </script>
