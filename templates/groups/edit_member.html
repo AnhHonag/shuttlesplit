@@ -21,8 +21,11 @@
       <div class="flex gap-2">
         <button type="submit" class="btn btn-primary">Lưu</button>
         <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary">Hủy</a>
-        <a href="{% url 'remove_member' group.pk membership.pk %}" class="btn btn-danger"
-          onclick="return confirm('Xóa thành viên này khỏi nhóm?')">🗑️ Xóa</a>
+        <form method="post" action="{% url 'remove_member' group.pk membership.pk %}" style="display:inline"
+          onsubmit="return confirm('Xóa thành viên này khỏi nhóm?')">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">🗑️ Xóa</button>
+        </form>
       </div>
     </form>
   </div></div>
