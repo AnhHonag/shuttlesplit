@@ -21,12 +21,14 @@
       <div class="flex gap-2">
         <button type="submit" class="btn btn-primary">Lưu</button>
         <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary">Hủy</a>
-        <form method="post" action="{% url 'remove_member' group.pk membership.pk %}" style="display:inline"
-          onsubmit="return confirm('Xóa thành viên này khỏi nhóm?')">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-danger">🗑️ Xóa</button>
-        </form>
       </div>
+    </form>
+
+    <hr style="border:none;border-top:1px solid var(--c-border);margin:20px 0">
+    <form method="post" action="{% url 'remove_member' group.pk membership.pk %}"
+      onsubmit="return confirm('Xóa thành viên này khỏi nhóm?')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">🗑️ Xóa thành viên khỏi nhóm</button>
     </form>
   </div></div>
 </div>{% endblock %}
