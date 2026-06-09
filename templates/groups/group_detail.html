@@ -1,161 +1,404 @@
-{% extends 'base.html' %}{% block title %}{{ group.name }}{% endblock %}
+{% extends 'base.html' %}{% block title %}{{ group.name }} — Dashboard{% endblock %}
+{% block extra_css %}<style>
+/* ── Dashboard grid ── */
+.dash-grid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+@media(max-width:960px){.dash-grid{grid-template-columns:1fr}}
+.stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+@media(max-width:860px){.stats4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.stats4{grid-template-columns:1fr}}
+
+/* ── Stat card v2 ── */
+.sv2{background:var(--c-white);border:1px solid var(--c-border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:14px}
+.sv2-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.sv2-val{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.5px;line-height:1.1}
+.sv2-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-ink-2);margin-top:3px}
+.sv2-sub{font-size:11.5px;color:var(--c-ink-3);margin-top:2px}
+
+/* ── 3-dot dropdown ── */
+.dd-wrap{position:relative;flex-shrink:0}
+.dd-btn{background:none;border:none;cursor:pointer;padding:5px 7px;border-radius:6px;color:var(--c-ink-3);font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
+.dd-btn:hover{background:var(--c-bg);color:var(--c-ink)}
+.dd-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--c-white);border:1px solid var(--c-border);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.12);min-width:190px;z-index:300;overflow:hidden}
+.dd-menu.show{display:block}
+.dd-item{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--c-ink);text-decoration:none;background:none;border:none;width:100%;text-align:left;cursor:pointer;transition:background .1s;white-space:nowrap}
+.dd-item:hover{background:#F0FDF4}
+.dd-item.danger{color:var(--c-red)}.dd-item.danger:hover{background:var(--c-red-light)}
+.dd-sep{height:1px;background:var(--c-border);margin:3px 0}
+
+/* ── Filter + Search ── */
+.filter-tabs{display:flex;gap:3px;background:var(--c-bg);border-radius:8px;padding:3px;flex-shrink:0}
+.ftab{padding:6px 13px;border:none;border-radius:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;background:transparent;color:var(--c-ink-2);transition:all .12s}
+.ftab.active{background:var(--c-white);color:var(--c-ink);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.search-wrap{display:flex;align-items:center;gap:8px;background:var(--c-bg);border:1.5px solid var(--c-border);border-radius:8px;padding:0 11px;flex:1;min-width:140px;max-width:260px}
+.search-wrap:focus-within{border-color:var(--c-green)}
+.search-wrap input{border:none;background:none;padding:8px 0;font-size:13.5px;color:var(--c-ink);font-family:'Plus Jakarta Sans',sans-serif;outline:none;width:100%}
+
+/* ── Member row ── */
+.mrow{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid var(--c-border);transition:background .1s}
+.mrow:last-child{border:none}
+.mrow:hover{background:#FAFCFA}
+
+/* ── Session row ── */
+.srow{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--c-border);text-decoration:none;color:inherit;transition:background .1s}
+.srow:last-child{border:none}
+.srow:hover{background:#F0FDF4}
+.sdate{background:var(--c-green-light);border-radius:8px;padding:7px 10px;text-align:center;min-width:46px;flex-shrink:0}
+.sdate .sm{font-size:10px;font-weight:700;color:var(--c-green);text-transform:uppercase}
+.sdate .sd{font-size:19px;font-weight:800;color:var(--c-ink);line-height:1.1}
+
+/* ── Sidebar components ── */
+.sc{background:var(--c-white);border:1px solid var(--c-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:14px}
+.sc:last-child{margin-bottom:0}
+.sc-hd{padding:11px 16px;border-bottom:1px solid var(--c-border)}
+.sc-hd .t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--c-ink-2)}
+.sc-bd{padding:14px 16px}
+.fin-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--c-border);font-size:13px}
+.fin-row:last-child{border:none}
+
+/* ── Mini bar chart ── */
+.mchart{display:flex;align-items:flex-end;gap:4px;height:68px;padding-bottom:20px;position:relative}
+.mchart::after{content:'';position:absolute;bottom:20px;left:0;right:0;height:1px;background:var(--c-border)}
+.mc-col{flex:1;display:flex;flex-direction:column;align-items:center}
+.mc-bar{width:100%;border-radius:3px 3px 0 0;background:var(--c-green-mid);min-height:3px;transition:height .3s}
+.mc-bar.cur{background:var(--c-green)}
+.mc-lbl{font-size:9px;font-weight:700;color:var(--c-ink-3);margin-top:5px;text-align:center}
+
+/* ── Progress bar ── */
+.prog-track{height:7px;background:var(--c-border);border-radius:100px;overflow:hidden;margin:6px 0 2px}
+.prog-fill{height:100%;background:var(--c-green);border-radius:100px}
+</style>{% endblock %}
+
 {% block content %}
-<div class="wrap">
+<div class="wrap-lg">
 
-  <!-- ── Header ── -->
-  <div class="page-header">
-    <div class="flex items-center justify-between flex-wrap gap-3">
+  <!-- ══ Header ══ -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <h1 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:26px;color:var(--c-ink)">🏸 {{ group.name }}</h1>
+        {% if not group.is_active %}<span class="badge badge-red" style="font-size:12px;padding:4px 12px">⏹ Ngưng hoạt động</span>{% endif %}
+      </div>
+      {% if group.description %}<p style="color:var(--c-ink-2);font-size:14px;margin-top:4px">{{ group.description }}</p>{% endif %}
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      {% if is_host and group.is_active %}
+      <a href="{% url 'create_session' group.pk %}" class="btn btn-primary btn-lg">+ Tạo buổi chơi</a>
+      {% endif %}
+      {% if not is_host %}
+      <a href="{% url 'submit_payment' group.pk %}" class="btn btn-blue">💳 Nộp tiền</a>
+      {% endif %}
+      <a href="{% url 'session_list' group.pk %}" class="btn btn-secondary">📅 Lịch buổi chơi</a>
+      <a href="{% url 'debt_report' group.pk %}" class="btn btn-ghost">📊 Báo cáo</a>
+    </div>
+  </div>
+
+  <!-- ══ 4 Stat cards ══ -->
+  <div class="stats4">
+    <div class="sv2">
+      <div class="sv2-icon" style="background:var(--c-blue-light)">👥</div>
       <div>
-        <div class="flex items-center gap-3 flex-wrap">
-          <div class="page-title">🏸 {{ group.name }}</div>
-          {% if not group.is_active %}
-          <span class="badge badge-red" style="font-size:13px;padding:4px 12px">⏹ Ngưng hoạt động</span>
-          {% endif %}
+        <div class="sv2-val" style="color:var(--c-blue)">{{ total_members }}</div>
+        <div class="sv2-lbl">Thành viên</div>
+        <div class="sv2-sub">{{ paid_count }} đóng · {{ debt_count }} nợ</div>
+      </div>
+    </div>
+    <div class="sv2">
+      <div class="sv2-icon" style="background:var(--c-green-light)">💰</div>
+      <div>
+        <div class="sv2-val" style="color:var(--c-green);font-family:'Space Grotesk',sans-serif">{{ total_deposited|floatformat:0 }}đ</div>
+        <div class="sv2-lbl">Tổng đã thu</div>
+        <div class="sv2-sub">{{ total_sessions_count }} buổi chơi</div>
+      </div>
+    </div>
+    <div class="sv2">
+      <div class="sv2-icon" style="background:var(--c-yellow-light)">💸</div>
+      <div>
+        <div class="sv2-val" style="color:var(--c-yellow);font-family:'Space Grotesk',sans-serif">{{ total_spent|floatformat:0 }}đ</div>
+        <div class="sv2-lbl">Tổng chi phí</div>
+        <div class="sv2-sub">Chi phí các buổi chơi</div>
+      </div>
+    </div>
+    <div class="sv2">
+      <div class="sv2-icon" style="background:{% if total_debt > 0 %}var(--c-red-light){% else %}var(--c-green-light){% endif %}">{% if total_debt > 0 %}⚠️{% else %}✅{% endif %}</div>
+      <div>
+        <div class="sv2-val" style="font-family:'Space Grotesk',sans-serif;color:{% if total_debt > 0 %}var(--c-red){% else %}var(--c-green){% endif %}">{{ total_debt|floatformat:0 }}đ</div>
+        <div class="sv2-lbl">Công nợ</div>
+        <div class="sv2-sub">{{ debt_count }} người còn nợ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Main grid ══ -->
+  <div class="dash-grid">
+
+    <!-- ─── Left: Members + Sessions ─── -->
+    <div>
+
+      <!-- Members -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-header" style="padding:12px 18px">
+          <span class="card-title">👥 Thành viên ({{ total_members }})</span>
+          {% if is_host %}<a href="{% url 'add_member' group.pk %}" class="btn btn-sm btn-primary">+ Thêm</a>{% endif %}
         </div>
-        {% if group.description %}<div class="page-sub">{{ group.description }}</div>{% endif %}
-      </div>
-      <div class="flex gap-2 flex-wrap">
-        {% if is_host and group.is_active %}
-        <a href="{% url 'create_session' group.pk %}" class="btn btn-primary">+ Tạo buổi chơi</a>
-        {% elif not is_host %}
-        <a href="{% url 'submit_payment' group.pk %}" class="btn btn-blue">💳 Nộp tiền</a>
-        {% endif %}
-        <a href="{% url 'debt_report' group.pk %}" class="btn btn-secondary">📊 Báo cáo nợ</a>
-      </div>
-    </div>
-  </div>
 
-  <!-- ── Ví của tôi ── -->
-  <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
-    <div class="stat {% if my_wallet.balance < 0 %}red{% else %}green{% endif %}">
-      <div class="stat-val">{{ my_wallet.balance|floatformat:0 }}đ</div>
-      <div class="stat-lbl">{% if my_wallet.balance < 0 %}Đang nợ{% else %}Số dư{% endif %}</div>
-    </div>
-    <div class="stat blue">
-      <div class="stat-val">{{ my_wallet.total_deposited|floatformat:0 }}đ</div>
-      <div class="stat-lbl">Đã nộp</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val">{{ my_wallet.total_spent|floatformat:0 }}đ</div>
-      <div class="stat-lbl">Chi phí buổi chơi</div>
-    </div>
-  </div>
-
-  <div class="two-col">
-
-    <!-- ── Thành viên ── -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">👥 Thành viên ({{ members|length }})</span>
-        {% if is_host %}<a href="{% url 'add_member' group.pk %}" class="btn btn-sm btn-primary">+ Thêm</a>{% endif %}
-      </div>
-      {% for item in member_data %}
-      <div class="flex items-center gap-3" style="padding:12px 20px;border-bottom:1px solid var(--c-border)">
-        <div class="avatar">{{ item.member.user.get_display_name|slice:":1"|upper }}</div>
-        <div style="flex:1;min-width:0">
-          <div class="font-bold text-sm">
-            {{ item.member.user.get_display_name }}
-            {% if item.member.is_host %}<span class="badge badge-green" style="margin-left:4px;font-size:11px">👑 Chủ</span>{% endif %}
+        <!-- Search + Filter bar -->
+        <div style="display:flex;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--c-border);flex-wrap:wrap">
+          <div class="search-wrap">
+            <span style="font-size:14px;color:var(--c-ink-3)">🔍</span>
+            <input type="text" id="member-search" placeholder="Tìm thành viên...">
           </div>
-          <div class="text-xs text-muted">@{{ item.member.user.username }}</div>
-        </div>
-        <div class="flex items-center gap-2">
-          {% if item.wallet.debt > 0 %}
-            <span class="badge badge-red">Nợ <span class="money" style="font-size:12px">{{ item.wallet.debt|floatformat:0 }}đ</span></span>
-            {% if is_host %}
-            <a href="{% url 'host_record_payment' group.pk item.member.pk %}" class="btn btn-sm btn-primary" title="Ghi nhận đã trả">✅</a>
-            <form method="post" action="{% url 'send_debt_reminder' group.pk item.member.pk %}" style="display:inline">
-              {% csrf_token %}<input type="hidden" name="next" value="group_detail">
-              <button type="submit" class="btn btn-sm btn-yellow" title="Nhắc nợ qua email">📧</button>
-            </form>
-            {% endif %}
-          {% else %}
-            <span class="badge badge-green">✅ Đủ</span>
-          {% endif %}
-          {% if is_host %}
-          <a href="{% url 'edit_member' group.pk item.member.pk %}" class="btn btn-sm btn-ghost" style="padding:4px 8px">✏️</a>
-          {% endif %}
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-
-    <!-- ── Buổi gần đây ── -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">📅 Buổi gần đây</span>
-        <a href="{% url 'session_list' group.pk %}" class="btn btn-sm btn-ghost">Xem tất cả →</a>
-      </div>
-      {% if sessions %}
-      {% for s in sessions %}
-      <a href="{% url 'session_detail' s.pk %}" class="session-row">
-        <div class="session-date-box">
-          <div class="dow">{{ s.date|date:"D" }}</div>
-          <div class="day">{{ s.date|date:"d" }}</div>
-        </div>
-        <div style="flex:1;min-width:0">
-          <div class="font-bold text-sm">{{ s.location|default:"Chưa có địa điểm" }}</div>
-          <div class="text-xs text-muted">{{ s.participants.count }} người · {{ s.fee_per_person|floatformat:0 }}đ/người</div>
-        </div>
-        <div class="money text-sm" style="flex-shrink:0">{{ s.total_fee|floatformat:0 }}đ</div>
-        <span style="color:var(--c-ink-3);margin-left:4px">›</span>
-      </a>
-      {% endfor %}
-      {% else %}
-      <div class="empty" style="padding:32px">
-        <div class="empty-icon" style="font-size:36px">📅</div>
-        <p>Chưa có buổi chơi nào</p>
-        {% if is_host %}<a href="{% url 'create_session' group.pk %}" class="btn btn-sm btn-primary" style="margin-top:10px">+ Tạo ngay</a>{% endif %}
-      </div>
-      {% endif %}
-    </div>
-
-  </div>
-
-  <!-- ── Khu quản lý (host only) ── -->
-  {% if is_host %}
-  <div class="card" style="margin-top:20px">
-    <div class="card-header"><span class="card-title">⚙️ Quản lý nhóm</span></div>
-    <div class="card-pad">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-
-        <!-- Invite code -->
-        <div class="invite-chip">
-          <span style="font-size:12px;color:rgba(255,255,255,.55)">Mã mời</span>
-          <span class="invite-code">{{ group.invite_code }}</span>
-          <span style="font-size:11px;color:rgba(255,255,255,.4)">Chia sẻ cho thành viên</span>
+          <div class="filter-tabs">
+            <button class="ftab active" data-filter="all">Tất cả</button>
+            <button class="ftab" data-filter="paid">✅ Đóng ({{ paid_count }})</button>
+            <button class="ftab" data-filter="debt">🔴 Nợ ({{ debt_count }})</button>
+          </div>
         </div>
 
-        <!-- Actions -->
-        <div class="flex gap-2 flex-wrap">
-          <a href="{% url 'deposit' group.pk %}" class="btn btn-yellow">💰 Nạp tiền</a>
-          <a href="{% url 'payment_list' group.pk %}" class="btn btn-blue">💳 Thanh toán</a>
-          <a href="{% url 'group_settings' group.pk %}" class="btn btn-secondary">⚙️ Cài đặt</a>
-          <form method="post" action="{% url 'toggle_group_active' group.pk %}"
-            onsubmit="return confirm('{% if group.is_active %}Ngưng hoạt động nhóm này? Thành viên sẽ không thấy nhóm trên dashboard.{% else %}Kích hoạt lại nhóm này?{% endif %}')">
-            {% csrf_token %}
-            {% if group.is_active %}
-            <button type="submit" class="btn btn-danger">⏹ Ngưng nhóm</button>
+        <!-- Member rows -->
+        {% for item in member_data %}
+        <div class="mrow" data-status="{% if item.wallet.debt > 0 %}debt{% else %}paid{% endif %}">
+          <div class="avatar" style="flex-shrink:0">{{ item.member.user.get_display_name|slice:":1"|upper }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap" class="member-name-text">
+              {{ item.member.user.get_display_name }}
+              {% if item.member.is_host %}<span class="badge badge-green" style="font-size:11px">👑 Chủ</span>{% endif %}
+            </div>
+            <div class="text-xs text-muted">@{{ item.member.user.username }}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-right:6px">
+            {% if item.wallet.debt > 0 %}
+            <span class="badge badge-red">🔴 Nợ <span class="money" style="font-size:12px">{{ item.wallet.debt|floatformat:0 }}đ</span></span>
             {% else %}
-            <button type="submit" class="btn btn-primary">▶ Kích hoạt lại</button>
+            <span class="badge badge-green">✅ Đã đóng</span>
             {% endif %}
-          </form>
+            <div class="text-xs text-muted" style="margin-top:3px">Đã nạp: <span class="money" style="font-size:11.5px">{{ item.wallet.total_deposited|floatformat:0 }}đ</span></div>
+          </div>
+          <!-- 3-dot menu -->
+          <div class="dd-wrap">
+            <button class="dd-btn" onclick="toggleDd(this,event)">⋯</button>
+            <div class="dd-menu">
+              {% if item.wallet.debt > 0 and is_host %}
+              <a href="{% url 'host_record_payment' group.pk item.member.pk %}" class="dd-item">✅ Ghi nhận đã trả</a>
+              {% endif %}
+              {% if is_host %}
+              <a href="{% url 'edit_member' group.pk item.member.pk %}" class="dd-item">✏️ Chỉnh sửa</a>
+              {% if item.wallet.debt > 0 %}
+              <div class="dd-sep"></div>
+              <form method="post" action="{% url 'send_debt_reminder' group.pk item.member.pk %}" style="display:contents">
+                {% csrf_token %}<input type="hidden" name="next" value="group_detail">
+                <button type="submit" class="dd-item">📧 Nhắc nợ</button>
+              </form>
+              {% endif %}
+              {% if not item.member.is_host %}
+              <div class="dd-sep"></div>
+              <form method="post" action="{% url 'remove_member' group.pk item.member.pk %}" style="display:contents"
+                onsubmit="return confirm('Xóa {{ item.member.user.get_display_name }} khỏi nhóm?')">
+                {% csrf_token %}
+                <button type="submit" class="dd-item danger">🗑 Xóa khỏi nhóm</button>
+              </form>
+              {% endif %}
+              {% endif %}
+            </div>
+          </div>
         </div>
-
+        {% endfor %}
       </div>
-      {% if is_host %}
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--c-border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <span class="text-sm text-muted">Tổng nợ nhóm:</span>
-        <span class="money {% if total_debt > 0 %}text-red{% else %}text-green{% endif %}">{{ total_debt|floatformat:0 }}đ</span>
-        <span class="text-sm text-muted">·</span>
-        <span class="text-sm text-muted">{{ group.sessions.count }} buổi chơi</span>
-        <span class="text-sm text-muted">·</span>
-        <span class="text-sm text-muted">{{ members|length }} thành viên</span>
+
+      <!-- Sessions -->
+      <div class="card">
+        <div class="card-header" style="padding:12px 18px">
+          <span class="card-title">📅 Buổi chơi gần đây</span>
+          <div style="display:flex;gap:8px">
+            {% if is_host and group.is_active %}
+            <a href="{% url 'create_session' group.pk %}" class="btn btn-sm btn-primary">+ Tạo</a>
+            {% endif %}
+            <a href="{% url 'session_list' group.pk %}" class="btn btn-sm btn-ghost">Tất cả →</a>
+          </div>
+        </div>
+        {% if sessions %}
+        {% for s in sessions %}
+        <a href="{% url 'session_detail' s.pk %}" class="srow">
+          <div class="sdate">
+            <div class="sm">{{ s.date|date:"M" }}</div>
+            <div class="sd">{{ s.date|date:"d" }}</div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:13.5px">{{ s.location|default:"Chưa có địa điểm" }}</div>
+            <div class="text-xs text-muted" style="margin-top:3px">
+              {{ s.date|date:"d/m/Y" }} &nbsp;·&nbsp;
+              {{ s.total_participants }} người tham gia
+              {% if s.debt_count > 0 %}
+              &nbsp;·&nbsp;<span style="color:var(--c-red);font-weight:700">{{ s.debt_count }} người chưa nộp</span>
+              {% endif %}
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div class="money text-sm">{{ s.total_fee|floatformat:0 }}đ</div>
+            <div class="text-xs text-muted">{{ s.fee_per_person|floatformat:0 }}đ/người</div>
+          </div>
+          <span style="color:var(--c-ink-3);margin-left:8px;font-size:16px">›</span>
+        </a>
+        {% endfor %}
+        {% else %}
+        <div class="empty" style="padding:40px 20px">
+          <div class="empty-icon">📅</div>
+          <h3>Chưa có buổi chơi</h3>
+          {% if is_host and group.is_active %}
+          <a href="{% url 'create_session' group.pk %}" class="btn btn-primary" style="margin-top:12px">+ Tạo buổi chơi đầu tiên</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- ─── Right: Sidebar ─── -->
+    <div>
+
+      <!-- My wallet (for members) -->
+      {% if not is_host %}
+      <div class="sc">
+        <div class="sc-hd"><span class="t">💳 Ví của tôi</span></div>
+        <div class="sc-bd">
+          <div style="text-align:center;padding:6px 0 10px">
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:28px;color:{% if my_wallet.balance < 0 %}var(--c-red){% else %}var(--c-green){% endif %}">
+              <span class="money">{{ my_wallet.balance|floatformat:0 }}đ</span>
+            </div>
+            <div class="text-xs text-muted" style="margin-top:4px">{% if my_wallet.balance < 0 %}Bạn đang nợ{% else %}Số dư khả dụng{% endif %}</div>
+          </div>
+          <div class="fin-row"><span class="text-muted">Đã nộp</span><span class="money text-sm text-green">{{ my_wallet.total_deposited|floatformat:0 }}đ</span></div>
+          <div class="fin-row"><span class="text-muted">Chi phí buổi chơi</span><span class="money text-sm">{{ my_wallet.total_spent|floatformat:0 }}đ</span></div>
+          <a href="{% url 'wallet_detail' group.pk %}" class="btn btn-ghost btn-block" style="margin-top:12px;font-size:13px">Xem lịch sử giao dịch →</a>
+        </div>
       </div>
       {% endif %}
+
+      <!-- Financial overview -->
+      <div class="sc">
+        <div class="sc-hd"><span class="t">📊 Tài chính nhóm</span></div>
+        <div class="sc-bd">
+          <div class="fin-row"><span class="text-muted">Tổng thành viên</span><span class="font-bold">{{ total_members }} người</span></div>
+          <div class="fin-row"><span class="text-muted">Đã đóng tiền</span><span style="color:var(--c-green);font-weight:700">{{ paid_count }} người</span></div>
+          <div class="fin-row"><span class="text-muted">Chưa đóng</span><span class="{% if debt_count > 0 %}text-red{% endif %} font-bold">{{ debt_count }} người</span></div>
+          <div class="fin-row"><span class="text-muted">Tổng nợ</span><span class="money text-sm {% if total_debt > 0 %}text-red{% else %}text-green{% endif %}">{{ total_debt|floatformat:0 }}đ</span></div>
+          <div class="fin-row"><span class="text-muted">Tổng buổi chơi</span><span class="font-bold">{{ total_sessions_count }} buổi</span></div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--c-border)">
+            <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+              <span class="text-xs text-muted font-bold" style="text-transform:uppercase;letter-spacing:.5px">Tỷ lệ đóng tiền</span>
+              <span class="text-xs font-bold" style="color:var(--c-green)">{{ payment_rate }}%</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" style="width:{{ payment_rate }}%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly cost chart -->
+      <div class="sc">
+        <div class="sc-hd" style="display:flex;align-items:center;justify-content:space-between">
+          <span class="t">📈 Chi phí 6 tháng</span>
+          <span class="text-xs text-muted money">{{ six_month_total|floatformat:0 }}đ</span>
+        </div>
+        <div class="sc-bd">
+          <div class="mchart">
+            {% for mc in monthly_costs %}
+            <div class="mc-col">
+              <div class="mc-bar {% if mc.is_current %}cur{% endif %}"
+                style="height:{% widthratio mc.cost max_monthly_cost 48 %}px;{% if mc.cost == 0 %}opacity:.3{% endif %}"></div>
+              <div class="mc-lbl">{{ mc.label }}</div>
+            </div>
+            {% endfor %}
+          </div>
+          {% with cur=monthly_costs|last %}
+          <div style="margin-top:6px;font-size:12px;color:var(--c-ink-2)">
+            Tháng này: <strong class="money" style="color:var(--c-green)">{{ cur.cost|floatformat:0 }}đ</strong>
+            ({{ cur.count }} buổi)
+          </div>
+          {% endwith %}
+        </div>
+      </div>
+
+      <!-- Top participants -->
+      {% if top_participants %}
+      <div class="sc">
+        <div class="sc-hd"><span class="t">🏆 Tham gia nhiều nhất</span></div>
+        <div style="padding:6px 0">
+          {% for tp in top_participants %}
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 16px">
+            <div class="avatar avatar-sm" style="background:{% cycle 'var(--c-green)' 'var(--c-blue)' 'var(--c-yellow)' '#7C3AED' '#DC2626' %}">{{ tp.user.get_display_name|slice:":1"|upper }}</div>
+            <div style="flex:1;font-size:13px;font-weight:600">{{ tp.user.get_display_name }}</div>
+            <span class="badge badge-green" style="font-size:11.5px">{{ tp.cnt }} buổi</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Host management -->
+      {% if is_host %}
+      <div class="sc">
+        <div class="sc-hd"><span class="t">⚙️ Quản lý nhóm</span></div>
+        <div class="sc-bd">
+          <div class="invite-chip" style="margin-bottom:14px">
+            <span style="font-size:11px;color:rgba(255,255,255,.5)">Mã mời</span>
+            <span class="invite-code">{{ group.invite_code }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <a href="{% url 'deposit' group.pk %}" class="btn btn-yellow btn-block">💰 Nạp tiền thành viên</a>
+            <a href="{% url 'payment_list' group.pk %}" class="btn btn-blue btn-block">💳 Danh sách thanh toán</a>
+            <a href="{% url 'group_settings' group.pk %}" class="btn btn-secondary btn-block">⚙️ Cài đặt nhóm</a>
+            <form method="post" action="{% url 'toggle_group_active' group.pk %}"
+              onsubmit="return confirm('{% if group.is_active %}Ngưng hoạt động nhóm này?{% else %}Kích hoạt lại nhóm?{% endif %}')">
+              {% csrf_token %}
+              {% if group.is_active %}
+              <button type="submit" class="btn btn-danger btn-block">⏹ Ngưng nhóm</button>
+              {% else %}
+              <button type="submit" class="btn btn-primary btn-block">▶ Kích hoạt lại</button>
+              {% endif %}
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
     </div>
   </div>
-  {% endif %}
 
 </div>
 {% endblock %}
+
+{% block extra_js %}<script>
+// 3-dot dropdown
+function toggleDd(btn, e) {
+  e.stopPropagation();
+  var menu = btn.nextElementSibling;
+  document.querySelectorAll('.dd-menu.show').forEach(function(m) {
+    if (m !== menu) m.classList.remove('show');
+  });
+  menu.classList.toggle('show');
+}
+document.addEventListener('click', function() {
+  document.querySelectorAll('.dd-menu.show').forEach(function(m) { m.classList.remove('show'); });
+});
+
+// Member search
+document.getElementById('member-search').addEventListener('input', function() {
+  var q = this.value.toLowerCase();
+  document.querySelectorAll('.mrow').forEach(function(row) {
+    var name = row.querySelector('.member-name-text').textContent.toLowerCase();
+    row.style.display = name.includes(q) ? '' : 'none';
+  });
+});
+
+// Filter tabs
+document.querySelectorAll('.ftab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.ftab').forEach(function(t) { t.classList.remove('active'); });
+    this.classList.add('active');
+    var f = this.dataset.filter;
+    document.getElementById('member-search').value = '';
+    document.querySelectorAll('.mrow').forEach(function(row) {
+      row.style.display = (f === 'all' || row.dataset.status === f) ? '' : 'none';
+    });
+  });
+});
+</script>{% endblock %}
