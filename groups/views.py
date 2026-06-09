@@ -111,6 +111,17 @@ def group_detail(request, pk):
 
 
 @login_required
+def toggle_group_active(request, pk):
+    group = get_object_or_404(Group, pk=pk, owner=request.user)
+    if request.method == 'POST':
+        group.is_active = not group.is_active
+        group.save()
+        status = 'đang hoạt động' if group.is_active else 'đã ngưng hoạt động'
+        messages.success(request, f'Nhóm "{group.name}" {status}.')
+    return redirect('group_detail', pk=pk)
+
+
+@login_required
 def group_settings(request, pk):
     group = get_object_or_404(Group, pk=pk, owner=request.user)
     if request.method == 'POST':
