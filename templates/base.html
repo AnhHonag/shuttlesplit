@@ -14,11 +14,10 @@
   <a href="{% url 'dashboard' %}" class="nav-brand">🏸 <em>Shuttle</em>Split</a>
   <div class="nav-links">
     {% if user.is_authenticated %}
-      <div class="nav-user">
+      <a href="{% url 'dashboard' %}" class="nav-user" style="text-decoration:none;color:rgba(255,255,255,.75)">
         <div class="uavatar">{{ user.get_display_name|slice:":1"|upper }}</div>
         {{ user.get_display_name }}
-      </div>
-      <a href="{% url 'dashboard' %}">Tổng quan</a>
+      </a>
       <a href="{% url 'my_sessions' %}">Lịch sử</a>
       <a href="{% url 'my_payments' %}">Thanh toán</a>
       <a href="{% url 'profile' %}">Hồ sơ</a>
