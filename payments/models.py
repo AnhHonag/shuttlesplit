@@ -22,7 +22,7 @@ class Payment(models.Model):
     method = models.CharField(max_length=20, choices=METHODS, default=METHOD_TRANSFER)
     status = models.CharField(max_length=20, choices=STATUSES, default=STATUS_PENDING)
     note = models.TextField(blank=True)
-    receipt_image = models.ImageField(upload_to='receipts/', null=True, blank=True)
+    receipt_image = models.FileField(upload_to='receipts/', null=True, blank=True)
     confirmed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
         null=True, blank=True, related_name='payments_confirmed'
