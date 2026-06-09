@@ -41,12 +41,8 @@
       <div class="stat-lbl">Tháng có buổi chơi</div>
     </div>
     <div class="stat yellow">
-      {% if year_total_sessions > 0 %}
-      <div class="stat-val">{{ year_total_fee|floatformat:0 }}đ</div>
-      {% else %}
-      <div class="stat-val">0đ</div>
-      {% endif %}
-      <div class="stat-lbl">Tổng chi phí cả năm</div>
+      <div class="stat-val">{{ avg_fee|floatformat:0 }}đ</div>
+      <div class="stat-lbl">TB chi phí / buổi</div>
     </div>
   </div>
 

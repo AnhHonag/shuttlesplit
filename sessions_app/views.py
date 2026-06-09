@@ -157,6 +157,7 @@ def session_list(request, group_pk):
 
     year_total_sessions = sum(m['count'] for m in monthly_data)
     year_total_fee = sum(m['total_fee'] for m in monthly_data)
+    avg_fee = (year_total_fee / year_total_sessions).quantize(Decimal('1')) if year_total_sessions else Decimal('0')
 
     return render(request, 'sessions_app/session_list.html', {
         'group': group,
@@ -166,6 +167,7 @@ def session_list(request, group_pk):
         'selected_year': selected_year,
         'year_total_sessions': year_total_sessions,
         'year_total_fee': year_total_fee,
+        'avg_fee': avg_fee,
     })
 
 
