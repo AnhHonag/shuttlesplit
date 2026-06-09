@@ -88,9 +88,36 @@ def confirm_payment_view(request, payment_pk):
 
 @login_required
 def my_payments(request):
-    """Lịch sử thanh toán của thành viên"""
-    payments = Payment.objects.filter(member=request.user).select_related('group')
-    return render(request, 'payments/my_payments.html', {'payments': payments})
+    """Lịch sử nộp tiền và giao dịch ví của thành viên"""
+    from wallet.models import WalletTransaction, Wallet
+    from django.db.models import Sum
+
+    payments = list(
+        Payment.objects.filter(member=request.user)
+        .select_related('group', 'confirmed_by')
+        .order_by('-created_at')
+    )
+    transactions = list(
+        WalletTransaction.objects.filter(wallet__user=request.user)
+        .select_related('wallet__group')
+        .order_by('-created_at')
+    )
+
+    total_confirmed = sum(p.amount for p in payments if p.status == Payment.STATUS_CONFIRMED)
+    pending_count = sum(1 for p in payments if p.status == Payment.STATUS_PENDING)
+
+    total_balance = Wallet.objects.filter(user=request.user).aggregate(
+        total=Sum('balance'))['total'] or 0
+
+    return render(request, 'payments/my_payments.html', {
+        'payments': payments,
+        'transactions': transactions,
+        'total_confirmed': total_confirmed,
+        'pending_count': pending_count,
+        'payments_count': len(payments),
+        'transactions_count': len(transactions),
+        'total_balance': total_balance,
+    })
 
 
 @login_required
