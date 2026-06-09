@@ -122,7 +122,7 @@ def group_detail(request, pk):
         parts = list(s.participants.all())
         s.total_participants = len(parts)
         s.debt_count = sum(1 for p in parts if p.user_id in debtor_ids)
-        s.fee_per_person = (s.total_fee / s.total_participants).quantize(Decimal('1')) if s.total_participants else Decimal('0')
+        s.fpp = (s.total_fee / s.total_participants).quantize(Decimal('1')) if s.total_participants else Decimal('0')
 
     # Monthly costs last 6 months (1 query)
     today = date.today()
