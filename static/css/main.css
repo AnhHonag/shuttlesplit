@@ -91,7 +91,10 @@ tbody tr:hover td{background:#F8FDF9}
 .mb-2{margin-bottom:8px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}
 .text-sm{font-size:13px}.text-xs{font-size:12px}.text-muted{color:var(--c-ink-2)}
 .text-green{color:var(--c-green)}.text-red{color:var(--c-red)}.font-bold{font-weight:700}
-.money{font-family:'Space Grotesk',sans-serif;font-weight:700}
+.money{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;letter-spacing:-.3px}
+.money.text-green{background:var(--c-green-light);color:var(--c-green);padding:3px 10px;border-radius:20px;font-size:13.5px}
+.money.text-red{background:var(--c-red-light);color:var(--c-red);padding:3px 10px;border-radius:20px;font-size:13.5px}
+.stat-val .money,.stat .money{background:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#0F172A 0%,#1E293B 40%,#0F2D1A 100%);padding:20px}
 .login-box{background:#fff;border-radius:20px;padding:40px 36px;width:100%;max-width:440px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
 .login-logo{text-align:center;margin-bottom:28px}

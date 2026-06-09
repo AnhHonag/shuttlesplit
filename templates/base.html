@@ -47,5 +47,18 @@
 
 {% block content %}{% endblock %}
 {% block extra_js %}{% endblock %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.money').forEach(el => {
+    const raw = el.textContent.trim();
+    const m = raw.match(/^([+]?)(-?\d+)(đ?)$/);
+    if (!m) return;
+    const sign = m[1];
+    const num = parseInt(m[2]);
+    if (isNaN(num)) return;
+    el.textContent = sign + num.toLocaleString('vi-VN') + 'đ';
+  });
+});
+</script>
 </body>
 </html>
