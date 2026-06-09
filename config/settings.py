@@ -1,7 +1,11 @@
 from pathlib import Path
 import os
-import dj_database_url
 from dotenv import load_dotenv
+try:
+    import dj_database_url
+    _HAS_DJ_DB_URL = True
+except ImportError:
+    _HAS_DJ_DB_URL = False
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
@@ -9,17 +13,34 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-shuttlesplit-v2-secre
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
+try:
+    import whitenoise  # noqa
+    _HAS_WHITENOISE = True
+except ImportError:
+    _HAS_WHITENOISE = False
+
+try:
+    import rest_framework  # noqa
+    _HAS_DRF = True
+except ImportError:
+    _HAS_DRF = False
+
+try:
+    import corsheaders  # noqa
+    _HAS_CORS = True
+except ImportError:
+    _HAS_CORS = False
+
 INSTALLED_APPS = [
-    'whitenoise.runserver_nostatic',
+    *(['whitenoise.runserver_nostatic'] if _HAS_WHITENOISE else []),
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'corsheaders',
+    *(['rest_framework', 'rest_framework.authtoken'] if _HAS_DRF else []),
+    *(['corsheaders'] if _HAS_CORS else []),
     'accounts',
     'groups',
     'sessions_app',
@@ -30,8 +51,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    *(['whitenoise.middleware.WhiteNoiseMiddleware'] if _HAS_WHITENOISE else []),
+    *(['corsheaders.middleware.CorsMiddleware'] if _HAS_CORS else []),
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -57,7 +78,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database — SQLite locally, PostgreSQL on Railway (via DATABASE_URL)
 DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL:
+if DATABASE_URL and _HAS_DJ_DB_URL:
     DATABASES = {'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)}
 else:
     DATABASES = {
