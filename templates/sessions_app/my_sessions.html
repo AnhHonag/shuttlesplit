@@ -1,24 +1,86 @@
-{% extends 'base.html' %}{% block title %}Lịch sử tham gia{% endblock %}
-{% block content %}<div class="wrap">
-  <div class="page-header"><div class="page-title">📅 Lịch sử tham gia</div></div>
+{% extends 'base.html' %}
+{% block title %}Lịch sử tham gia{% endblock %}
+{% block content %}
+<div class="wrap">
+
+  <div class="page-header">
+    <div class="page-title">📅 Lịch sử tham gia</div>
+    <div class="page-sub">Các buổi cầu lông bạn đã tham gia</div>
+  </div>
+
   {% if participations %}
-  <div class="card"><div class="tbl-wrap"><table>
-    <thead><tr><th>Nhóm</th><th>Ngày</th><th>Địa điểm</th><th>Số người</th><th>Tổng chi phí</th><th>Phần của tôi</th><th></th></tr></thead>
-    <tbody>
-      {% for p in participations %}
-      <tr>
-        <td class="font-bold">{{ p.session.group.name }}</td>
-        <td>{{ p.session.date }}</td>
-        <td class="text-muted">{{ p.session.location|default:"—" }}</td>
-        <td>{{ p.session.participants.count }} người</td>
-        <td><span class="money">{{ p.session.total_fee|floatformat:0 }}đ</span></td>
-        <td><span class="money text-red">{{ p.amount_owed|floatformat:0 }}đ</span></td>
-        <td><a href="{% url 'session_detail' p.session.pk %}" class="btn btn-sm btn-ghost">Xem</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table></div></div>
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat green">
+      <div class="stat-val">{{ paid_count }}</div>
+      <div class="stat-lbl">Buổi đã nộp tiền</div>
+    </div>
+    <div class="stat {% if unpaid_count > 0 %}red{% endif %}">
+      <div class="stat-val">{{ unpaid_count }}</div>
+      <div class="stat-lbl">Buổi chưa nộp</div>
+    </div>
+    <div class="stat blue">
+      <div class="stat-val">{{ total_owed|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Tổng đã chơi</div>
+    </div>
+    <div class="stat {% if unpaid_amount > 0 %}red{% endif %}">
+      <div class="stat-val">{{ unpaid_amount|floatformat:0 }}đ</div>
+      <div class="stat-lbl">Còn phải nộp</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nhóm</th>
+            <th>Ngày</th>
+            <th>Địa điểm</th>
+            <th>Số người</th>
+            <th>Tổng chi phí</th>
+            <th>Phần của tôi</th>
+            <th>Trạng thái</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in participations %}
+          <tr>
+            <td>
+              <a href="{% url 'group_detail' p.session.group.pk %}" style="color:var(--c-ink);text-decoration:none;font-weight:700">
+                {{ p.session.group.name }}
+              </a>
+            </td>
+            <td class="font-bold">{{ p.session.date|date:"d/m/Y" }}</td>
+            <td class="text-muted text-sm">{{ p.session.location|default:"—" }}</td>
+            <td class="text-muted text-sm">{{ p.session.participants.count }} người</td>
+            <td><span class="money">{{ p.session.total_fee|floatformat:0 }}đ</span></td>
+            <td><span class="money text-red">{{ p.amount_owed|floatformat:0 }}đ</span></td>
+            <td>
+              {% if p.is_paid %}
+                <span class="badge badge-green">✅ Đã nộp</span>
+              {% else %}
+                <span class="badge badge-red">❌ Chưa nộp</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'session_detail' p.session.pk %}" class="btn btn-sm btn-ghost">Xem</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   {% else %}
-  <div class="card"><div class="empty"><div class="empty-icon">📅</div><h3>Chưa tham gia buổi chơi nào</h3></div></div>
+  <div class="card"><div class="empty">
+    <div class="empty-icon">📅</div>
+    <h3>Chưa tham gia buổi chơi nào</h3>
+    <p>Khi bạn tham gia buổi cầu lông, lịch sử sẽ hiện tại đây.</p>
+  </div></div>
   {% endif %}
-</div>{% endblock %}
+
+</div>
+{% endblock %}

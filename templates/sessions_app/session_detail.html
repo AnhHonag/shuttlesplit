@@ -58,7 +58,7 @@
   <div class="card mt-6" style="margin-top:24px">
     <div class="card-header"><span class="card-title">👥 Danh sách tham gia ({{ participants|length }} người)</span></div>
     <div class="tbl-wrap"><table>
-      <thead><tr><th>Thành viên</th><th>Số tiền</th><th>Số dư sau buổi</th></tr></thead>
+      <thead><tr><th>Thành viên</th><th>Phần tiền</th><th>Tình trạng nợ</th></tr></thead>
       <tbody>
         {% for p in participants %}
         <tr {% if p.user == request.user %}style="background:#F0FDF4"{% endif %}>
@@ -71,11 +71,15 @@
           </div></td>
           <td><span class="money text-red">{{ p.amount_owed|floatformat:0 }}đ</span></td>
           <td>
-            {% with wallet=p.user.wallets.all|first %}
-            <span class="badge {% if wallet and wallet.balance >= 0 %}badge-green{% else %}badge-red{% endif %}">
-              {% if wallet %}{{ wallet.balance|floatformat:0 }}đ{% else %}—{% endif %}
-            </span>
-            {% endwith %}
+            {% if p.group_wallet %}
+              {% if p.group_wallet.balance >= 0 %}
+                <span class="badge badge-green">✅ Đã trả đủ</span>
+              {% else %}
+                <span class="badge badge-red">Còn nợ <span class="money" style="font-size:12px">{{ p.group_wallet.debt|floatformat:0 }}đ</span></span>
+              {% endif %}
+            {% else %}
+              <span class="badge badge-gray">Chưa có ví</span>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
