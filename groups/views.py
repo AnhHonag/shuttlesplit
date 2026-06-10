@@ -198,6 +198,10 @@ def group_settings(request, pk):
         group.bank_account = request.POST.get('bank_account', '').strip()
         group.bank_owner = request.POST.get('bank_owner', '').strip()
         group.is_active = request.POST.get('is_active') == '1'
+        if request.FILES.get('cover_image'):
+            group.cover_image = request.FILES['cover_image']
+        elif request.POST.get('clear_cover'):
+            group.cover_image = None
         group.save()
         status = 'đang hoạt động' if group.is_active else 'đã ngưng hoạt động'
         messages.success(request, f'Cập nhật nhóm thành công! Trạng thái: {status}.')
@@ -221,6 +225,9 @@ def add_member(request, pk):
                 username=username, password=password,
                 full_name=full_name, email=email, phone=phone
             )
+            if request.FILES.get('avatar'):
+                user.avatar = request.FILES['avatar']
+                user.save()
             GroupMember.objects.create(group=group, user=user, role=GroupMember.ROLE_MEMBER)
             get_or_create_wallet(user, group)
             messages.success(request, f'Thêm thành viên "{full_name}" thành công!')
@@ -237,6 +244,8 @@ def edit_member(request, group_pk, member_pk):
         user.full_name = request.POST.get('full_name', '').strip()
         user.email = request.POST.get('email', '').strip()
         user.phone = request.POST.get('phone', '').strip()
+        if request.FILES.get('avatar'):
+            user.avatar = request.FILES['avatar']
         new_pass = request.POST.get('new_password', '').strip()
         if new_pass:
             user.set_password(new_pass)

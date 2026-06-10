@@ -15,7 +15,11 @@
   <div class="nav-links">
     {% if user.is_authenticated %}
       <a href="{% url 'dashboard' %}" class="nav-user" style="text-decoration:none;color:rgba(255,255,255,.75)">
+        {% if user.avatar %}
+        <img src="{{ user.avatar.url }}" alt="" class="uavatar" style="object-fit:cover">
+        {% else %}
         <div class="uavatar">{{ user.get_display_name|slice:":1"|upper }}</div>
+        {% endif %}
         {{ user.get_display_name }}
       </a>
       <a href="{% url 'my_sessions' %}">Lịch sử</a>

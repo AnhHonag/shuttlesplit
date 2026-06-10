@@ -17,6 +17,7 @@ class Group(models.Model):
     bank_bin = models.CharField(max_length=20, blank=True)  # VietQR bank BIN code
     bank_account = models.CharField(max_length=50, blank=True)
     bank_owner = models.CharField(max_length=100, blank=True)
+    cover_image = models.ImageField(upload_to='group_covers/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 

@@ -3,7 +3,21 @@
   <div class="page-header"><div class="page-title">✏️ Sửa thành viên</div>
   <div class="page-sub">Nhóm: {{ group.name }}</div></div>
   <div class="card"><div class="card-pad">
-    <form method="post">{% csrf_token %}
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <!-- Avatar -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--c-border)">
+        {% if member.avatar %}
+        <img id="av-img" src="{{ member.avatar.url }}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--c-green);flex-shrink:0">
+        {% else %}
+        <div id="av-fallback" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--c-green),#059669);
+          color:#fff;font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;
+          border:3px solid var(--c-green);flex-shrink:0">{{ member.get_display_name|slice:":1"|upper }}</div>
+        {% endif %}
+        <div style="flex:1">
+          <label class="form-label">Đổi ảnh đại diện</label>
+          <input type="file" name="avatar" accept="image/*" class="form-control" style="padding:6px" onchange="previewAv(this)">
+        </div>
+      </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Họ tên</label>
         <input name="full_name" class="form-control" value="{{ member.full_name }}"></div>
@@ -32,3 +46,23 @@
     </form>
   </div></div>
 </div>{% endblock %}
+
+{% block extra_js %}<script>
+function previewAv(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = document.getElementById('av-img');
+    var fallback = document.getElementById('av-fallback');
+    if (img) { img.src = e.target.result; }
+    else if (fallback) {
+      var newImg = document.createElement('img');
+      newImg.id = 'av-img';
+      newImg.src = e.target.result;
+      newImg.style = 'width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--c-green);flex-shrink:0';
+      fallback.replaceWith(newImg);
+    }
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+</script>{% endblock %}

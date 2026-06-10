@@ -3,7 +3,18 @@
   <div class="page-header"><div class="page-title">➕ Thêm thành viên</div>
   <div class="page-sub">Tạo tài khoản và thêm vào nhóm <strong>{{ group.name }}</strong></div></div>
   <div class="card"><div class="card-pad">
-    <form method="post">{% csrf_token %}
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <!-- Avatar preview -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+        <div id="av-preview" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--c-green),#059669);
+          color:#fff;font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;
+          border:3px solid var(--c-green);overflow:hidden;flex-shrink:0">?</div>
+        <div>
+          <label class="form-label">Ảnh đại diện</label>
+          <input type="file" name="avatar" accept="image/*" class="form-control" style="padding:6px"
+            onchange="previewAv(this)">
+        </div>
+      </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Họ tên *</label>
         <input name="full_name" class="form-control" placeholder="Nguyễn Văn A" required autofocus></div>
@@ -25,6 +36,22 @@
       </div>
     </form>
   </div></div>
+  {% block extra_js %}<script>
+  function previewAv(input) {
+    if (!input.files || !input.files[0]) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var p = document.getElementById('av-preview');
+      p.innerHTML = '';
+      p.style.background = 'none';
+      var img = document.createElement('img');
+      img.src = e.target.result;
+      img.style = 'width:100%;height:100%;object-fit:cover';
+      p.appendChild(img);
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+  </script>{% endblock %}
   <div class="card mt-4" style="margin-top:16px"><div class="card-pad">
     <p class="text-sm font-bold" style="margin-bottom:8px">💡 Hoặc chia sẻ mã mời</p>
     <p class="text-sm text-muted" style="margin-bottom:12px">Thành viên tự đăng ký tài khoản (nếu có) rồi dùng mã:</p>

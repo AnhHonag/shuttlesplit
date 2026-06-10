@@ -7,7 +7,43 @@
     <div class="page-sub">{{ group.name }}</div>
   </div>
   <div class="card"><div class="card-pad">
-    <form method="post" id="group-form">{% csrf_token %}
+    <form method="post" enctype="multipart/form-data" id="group-form">{% csrf_token %}
+
+      <!-- Cover image -->
+      <div class="form-group">
+        <label class="form-label">🖼 Ảnh bìa nhóm</label>
+        {% if group.cover_image %}
+        <div style="margin-bottom:10px;position:relative;display:inline-block">
+          <img src="{{ group.cover_image.url }}" alt="Ảnh bìa"
+            style="width:100%;max-width:480px;height:140px;object-fit:cover;border-radius:10px;border:1.5px solid var(--c-border)">
+          <label style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;
+            font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer">
+            ✏️ Đổi ảnh
+            <input type="file" name="cover_image" accept="image/*" style="display:none" onchange="previewCover(this)">
+          </label>
+        </div>
+        <div style="margin-top:6px">
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--c-red);cursor:pointer;font-weight:600">
+            <input type="checkbox" name="clear_cover" value="1" style="accent-color:var(--c-red)"> Xóa ảnh bìa
+          </label>
+        </div>
+        {% else %}
+        <div id="cover-preview" style="width:100%;max-width:480px;height:140px;border:2px dashed var(--c-border-2);
+          border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+          color:var(--c-ink-3);cursor:pointer;transition:border-color .15s;background:var(--c-bg)"
+          onclick="document.getElementById('cover-input').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--c-green)'"
+          ondragleave="this.style.borderColor='var(--c-border-2)'"
+          ondrop="handleCoverDrop(event)">
+          <div style="font-size:32px;margin-bottom:6px">🖼</div>
+          <div style="font-size:13px;font-weight:600">Nhấp để chọn ảnh bìa</div>
+          <div style="font-size:11px;margin-top:3px">JPG, PNG · Tối đa 5MB</div>
+        </div>
+        <input type="file" id="cover-input" name="cover_image" accept="image/*" style="display:none" onchange="previewCover(this)">
+        {% endif %}
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--c-border);margin:16px 0">
       <div class="form-group">
         <label class="form-label">Tên nhóm</label>
         <input name="name" class="form-control" value="{{ group.name }}" required>
@@ -72,6 +108,27 @@
 
 {% block extra_js %}
 <script>
+function previewCover(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var p = document.getElementById('cover-preview');
+    if (p) {
+      p.style.backgroundImage = 'url(' + e.target.result + ')';
+      p.style.backgroundSize = 'cover';
+      p.style.backgroundPosition = 'center';
+      p.innerHTML = '';
+    }
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function handleCoverDrop(e) {
+  e.preventDefault();
+  var inp = document.getElementById('cover-input');
+  inp.files = e.dataTransfer.files;
+  previewCover(inp);
+  document.getElementById('cover-preview').style.borderColor = 'var(--c-border-2)';
+}
 function updateStatus(el) {
   document.querySelectorAll('[name="is_active"]').forEach(r => {
     const lbl = r.closest('label');

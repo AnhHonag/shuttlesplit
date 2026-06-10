@@ -71,24 +71,37 @@
 {% block content %}
 <div class="wrap-lg">
 
-  <!-- ══ Header ══ -->
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px">
-    <div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <h1 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:26px;color:var(--c-ink)">🏸 {{ group.name }}</h1>
-        {% if not group.is_active %}<span class="badge badge-red" style="font-size:12px;padding:4px 12px">⏹ Ngưng hoạt động</span>{% endif %}
+  <!-- ══ Cover banner ══ -->
+  <div style="position:relative;border-radius:var(--radius-lg);overflow:hidden;margin-bottom:22px;
+    {% if group.cover_image %}
+    background:url('{{ group.cover_image.url }}') center/cover no-repeat;
+    min-height:180px;
+    {% else %}
+    background:linear-gradient(135deg,#0F172A 0%,#064E3B 60%,#14532D 100%);
+    min-height:140px;
+    {% endif %}
+    box-shadow:var(--shadow)">
+    <!-- Overlay -->
+    <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,rgba(0,0,0,.2) 60%,transparent 100%);{% if not group.cover_image %}background:rgba(0,0,0,.15){% endif %}"></div>
+    <!-- Content -->
+    <div style="position:relative;z-index:1;padding:24px 28px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;min-height:inherit">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <h1 style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:26px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4)">🏸 {{ group.name }}</h1>
+          {% if not group.is_active %}<span class="badge badge-red" style="font-size:12px;padding:4px 12px">⏹ Ngưng hoạt động</span>{% endif %}
+        </div>
+        {% if group.description %}<p style="color:rgba(255,255,255,.8);font-size:14px;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,.4)">{{ group.description }}</p>{% endif %}
       </div>
-      {% if group.description %}<p style="color:var(--c-ink-2);font-size:14px;margin-top:4px">{{ group.description }}</p>{% endif %}
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      {% if is_host and group.is_active %}
-      <a href="{% url 'create_session' group.pk %}" class="btn btn-primary btn-lg">+ Tạo buổi chơi</a>
-      {% endif %}
-      {% if not is_host %}
-      <a href="{% url 'submit_payment' group.pk %}" class="btn btn-blue">💳 Nộp tiền</a>
-      {% endif %}
-      <a href="{% url 'session_list' group.pk %}" class="btn btn-secondary">📅 Lịch buổi chơi</a>
-      <a href="{% url 'debt_report' group.pk %}" class="btn btn-ghost">📊 Báo cáo</a>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        {% if is_host and group.is_active %}
+        <a href="{% url 'create_session' group.pk %}" class="btn btn-primary btn-lg">+ Tạo buổi chơi</a>
+        {% endif %}
+        {% if not is_host %}
+        <a href="{% url 'submit_payment' group.pk %}" class="btn btn-blue">💳 Nộp tiền</a>
+        {% endif %}
+        <a href="{% url 'session_list' group.pk %}" class="btn btn-secondary">📅 Lịch buổi chơi</a>
+        <a href="{% url 'debt_report' group.pk %}" class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,.4)">📊 Báo cáo</a>
+      </div>
     </div>
   </div>
 
@@ -157,7 +170,11 @@
         <!-- Member rows -->
         {% for item in member_data %}
         <div class="mrow" data-status="{% if item.wallet.debt > 0 %}debt{% else %}paid{% endif %}">
+          {% if item.member.user.avatar %}
+          <img src="{{ item.member.user.avatar.url }}" alt="" class="avatar" style="object-fit:cover;flex-shrink:0">
+          {% else %}
           <div class="avatar" style="flex-shrink:0">{{ item.member.user.get_display_name|slice:":1"|upper }}</div>
+          {% endif %}
           <div style="flex:1;min-width:0">
             <div style="font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap" class="member-name-text">
               {{ item.member.user.get_display_name }}
@@ -324,7 +341,11 @@
         <div style="padding:6px 0">
           {% for tp in top_participants %}
           <div style="display:flex;align-items:center;gap:10px;padding:8px 16px">
+            {% if tp.user.avatar %}
+            <img src="{{ tp.user.avatar.url }}" alt="" class="avatar avatar-sm" style="object-fit:cover">
+            {% else %}
             <div class="avatar avatar-sm" style="background:{% cycle 'var(--c-green)' 'var(--c-blue)' 'var(--c-yellow)' '#7C3AED' '#DC2626' %}">{{ tp.user.get_display_name|slice:":1"|upper }}</div>
+            {% endif %}
             <div style="flex:1;font-size:13px;font-weight:600">{{ tp.user.get_display_name }}</div>
             <span class="badge badge-green" style="font-size:11.5px">{{ tp.cnt }} buổi</span>
           </div>

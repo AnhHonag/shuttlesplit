@@ -3,6 +3,33 @@
   <div class="page-header"><div class="page-title">👤 Hồ sơ cá nhân</div></div>
   <div class="card"><div class="card-pad">
     <form method="post" enctype="multipart/form-data">{% csrf_token %}
+
+      <!-- Avatar -->
+      <div style="display:flex;align-items:center;gap:18px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--c-border)">
+        <div style="position:relative;flex-shrink:0">
+          {% if user.avatar %}
+          <img id="avatar-img" src="{{ user.avatar.url }}" alt="Avatar"
+            style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--c-green)">
+          {% else %}
+          <div id="avatar-fallback" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--c-green),#059669);
+            color:#fff;font-size:28px;font-weight:800;display:flex;align-items:center;justify-content:center;border:3px solid var(--c-green)">
+            {{ user.get_display_name|slice:":1"|upper }}
+          </div>
+          {% endif %}
+          <label style="position:absolute;bottom:0;right:0;width:26px;height:26px;background:var(--c-ink);border-radius:50%;
+            display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff;font-size:12px"
+            title="Đổi ảnh đại diện">
+            ✏️
+            <input type="file" name="avatar" accept="image/*" style="display:none" onchange="previewAvatar(this)">
+          </label>
+        </div>
+        <div>
+          <div style="font-weight:800;font-size:16px">{{ user.get_display_name }}</div>
+          <div class="text-xs text-muted">@{{ user.username }}</div>
+          <div class="text-xs text-muted" style="margin-top:6px">Nhấp vào biểu tượng ✏️ để đổi ảnh đại diện</div>
+        </div>
+      </div>
+
       <div class="form-row">
         <div class="form-group"><label class="form-label">Họ tên</label>
         <input name="full_name" class="form-control" value="{{ user.full_name }}"></div>
@@ -24,3 +51,24 @@
     </form>
   </div></div>
 </div>{% endblock %}
+
+{% block extra_js %}<script>
+function previewAvatar(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = document.getElementById('avatar-img');
+    var fallback = document.getElementById('avatar-fallback');
+    if (img) {
+      img.src = e.target.result;
+    } else if (fallback) {
+      var newImg = document.createElement('img');
+      newImg.id = 'avatar-img';
+      newImg.src = e.target.result;
+      newImg.style = 'width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--c-green)';
+      fallback.replaceWith(newImg);
+    }
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+</script>{% endblock %}
