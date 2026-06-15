@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Cài đặt nhóm{% endblock %}
+{% block extra_css %}<style>
+@media(max-width:560px){.bank-grid{grid-template-columns:1fr !important}}
+</style>{% endblock %}
 {% block content %}
 <div class="wrap-sm">
   <div class="page-header">
@@ -54,26 +57,70 @@
       </div>
 
       <hr style="border:none;border-top:1px solid var(--c-border);margin:20px 0">
-      <p style="font-weight:700;font-size:14px;margin-bottom:4px">💳 Thông tin nhận chuyển khoản</p>
-      <p class="text-sm text-muted" style="margin-bottom:16px">Dùng trong email nhắc nợ tự động</p>
+      <p style="font-weight:700;font-size:15px;margin-bottom:4px">💳 Thông tin nhận chuyển khoản</p>
+      <p class="text-sm text-muted" style="margin-bottom:18px">Hiển thị cho thành viên khi nộp tiền và trong email nhắc nợ</p>
 
-      <div class="form-group">
-        <label class="form-label">Ngân hàng</label>
-        <input name="bank_name" class="form-control" value="{{ group.bank_name }}"
-          placeholder="VD: Vietcombank, MB Bank, Techcombank...">
+      <div class="bank-grid" style="display:grid;grid-template-columns:1fr 200px;gap:24px;align-items:start">
+        <!-- Left: text fields -->
+        <div>
+          <div class="form-group">
+            <label class="form-label">Ngân hàng</label>
+            <input name="bank_name" class="form-control" value="{{ group.bank_name }}"
+              placeholder="VD: Vietcombank, MB Bank, Techcombank...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Số tài khoản</label>
+            <input name="bank_account" id="bank-account-input" class="form-control" value="{{ group.bank_account }}"
+              placeholder="Nhập số tài khoản" style="font-size:16px;letter-spacing:1.5px;font-weight:700">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Chủ tài khoản</label>
+            <input name="bank_owner" class="form-control" value="{{ group.bank_owner }}"
+              placeholder="Tên chủ tài khoản" style="font-weight:700;text-transform:uppercase">
+          </div>
+        </div>
+
+        <!-- Right: QR code -->
+        <div>
+          <label class="form-label">Mã QR chuyển khoản</label>
+          {% if group.bank_qr %}
+          <div style="position:relative;display:inline-block;width:100%">
+            <img id="qr-preview-img" src="{{ group.bank_qr.url }}" alt="QR"
+              style="width:100%;border-radius:10px;border:1.5px solid var(--c-border);display:block">
+            <label style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+              background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:700;
+              padding:4px 12px;border-radius:20px;cursor:pointer;white-space:nowrap">
+              🔄 Đổi QR
+              <input type="file" name="bank_qr" accept="image/*" style="display:none" onchange="previewQr(this)">
+            </label>
+          </div>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--c-red);
+            cursor:pointer;font-weight:600;margin-top:8px;justify-content:center">
+            <input type="checkbox" name="clear_bank_qr" value="1" style="accent-color:var(--c-red)"> Xóa mã QR
+          </label>
+          {% else %}
+          <div id="qr-dropzone" style="border:2px dashed var(--c-border-2);border-radius:10px;padding:20px 12px;
+            text-align:center;cursor:pointer;background:var(--c-bg);transition:border-color .15s"
+            onclick="document.getElementById('qr-input').click()"
+            ondragover="event.preventDefault();this.style.borderColor='var(--c-green)'"
+            ondragleave="this.style.borderColor='var(--c-border-2)'"
+            ondrop="handleQrDrop(event)">
+            <div style="font-size:28px;margin-bottom:6px">📷</div>
+            <div style="font-size:12px;font-weight:600;color:var(--c-ink-2)">Tải lên mã QR</div>
+            <div style="font-size:11px;color:var(--c-ink-3);margin-top:3px">JPG, PNG</div>
+          </div>
+          <input type="file" id="qr-input" name="bank_qr" accept="image/*" style="display:none" onchange="previewQr(this)">
+          {% endif %}
+        </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Số tài khoản</label>
-        <input name="bank_account" class="form-control" value="{{ group.bank_account }}"
-          placeholder="Nhập số tài khoản" style="font-size:16px;letter-spacing:1px;font-weight:600">
+      <!-- Preview mới khi chọn file (chỉ hiện khi chưa có QR) -->
+      {% if not group.bank_qr %}
+      <div id="qr-preview-wrap" style="display:none;margin-top:10px;text-align:center">
+        <img id="qr-preview-img" style="max-width:180px;border-radius:10px;border:1.5px solid var(--c-green)">
+        <div style="font-size:12px;color:var(--c-green);font-weight:600;margin-top:6px">✅ Sẵn sàng tải lên</div>
       </div>
-
-      <div class="form-group">
-        <label class="form-label">Chủ tài khoản</label>
-        <input name="bank_owner" class="form-control" value="{{ group.bank_owner }}"
-          placeholder="Tên chủ tài khoản" style="font-weight:700;text-transform:uppercase">
-      </div>
+      {% endif %}
 
       <hr style="border:none;border-top:1px solid var(--c-border);margin:20px 0">
       <div class="form-group">
@@ -128,6 +175,25 @@ function handleCoverDrop(e) {
   inp.files = e.dataTransfer.files;
   previewCover(inp);
   document.getElementById('cover-preview').style.borderColor = 'var(--c-border-2)';
+}
+function previewQr(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var wrap = document.getElementById('qr-preview-wrap');
+    var img  = document.getElementById('qr-preview-img');
+    var dz   = document.getElementById('qr-dropzone');
+    if (img) img.src = e.target.result;
+    if (wrap) wrap.style.display = 'block';
+    if (dz)  dz.style.display = 'none';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function handleQrDrop(e) {
+  e.preventDefault();
+  var inp = document.getElementById('qr-input');
+  inp.files = e.dataTransfer.files;
+  previewQr(inp);
 }
 function updateStatus(el) {
   document.querySelectorAll('[name="is_active"]').forEach(r => {

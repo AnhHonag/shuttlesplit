@@ -202,6 +202,10 @@ def group_settings(request, pk):
             group.cover_image = request.FILES['cover_image']
         elif request.POST.get('clear_cover'):
             group.cover_image = None
+        if request.FILES.get('bank_qr'):
+            group.bank_qr = request.FILES['bank_qr']
+        elif request.POST.get('clear_bank_qr'):
+            group.bank_qr = None
         group.save()
         status = 'đang hoạt động' if group.is_active else 'đã ngưng hoạt động'
         messages.success(request, f'Cập nhật nhóm thành công! Trạng thái: {status}.')
