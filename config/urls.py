@@ -1,5 +1,6 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.views.static import serve
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -10,11 +11,9 @@ urlpatterns = [
     path('', include('sessions_app.urls')),
     path('', include('payments.urls')),
     path('', include('wallet.urls')),
+    # Serve uploaded media files in all environments (avatars, QR codes, receipts, covers)
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
-
-# Always serve media files (user uploads: avatars, QR codes, receipts)
-# WhiteNoise handles static files in production
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
