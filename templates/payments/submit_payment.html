@@ -1,26 +1,49 @@
 {% extends 'base.html' %}{% block title %}Nộp tiền — {{ group.name }}{% endblock %}
 {% block extra_css %}<style>
-.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
-@media(max-width:680px){.pay-grid{grid-template-columns:1fr}}
-.bank-card{background:var(--c-ink);color:#fff;border-radius:var(--radius-lg);overflow:hidden;position:sticky;top:76px}
-.bank-card-hd{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.1);font-size:11px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.45)}
-.bank-card-bd{padding:18px}
-.bank-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)}
-.bank-row:last-child{border:none}
-.bank-lbl{font-size:12px;color:rgba(255,255,255,.5)}
-.bank-val{font-weight:700;font-size:14px;text-align:right}
-.copy-btn{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);
-  font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;
-  margin-left:8px;transition:all .15s;white-space:nowrap}
-.copy-btn:hover{background:var(--c-green);color:#fff}
-.copy-btn.copied{background:var(--c-green);color:#fff}
-.qr-box{background:rgba(255,255,255,.05);border-radius:10px;padding:14px;text-align:center;margin-top:14px}
-.debt-banner{background:linear-gradient(135deg,var(--c-red-light),#FEE2E2);border:1.5px solid #FCA5A5;
-  border-radius:var(--radius);padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:14px}
+/* ── layout ── */
+.pay-wrap{max-width:760px;margin:0 auto;padding:28px 20px}
+.pay-top{display:grid;grid-template-columns:260px 1fr;gap:0;background:var(--c-ink);
+  border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px;box-shadow:var(--shadow)}
+@media(max-width:640px){.pay-top{grid-template-columns:1fr}}
+
+/* ── QR panel ── */
+.qr-panel{background:#111827;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:28px 24px;border-right:1px solid rgba(255,255,255,.08)}
+@media(max-width:640px){.qr-panel{border-right:none;border-bottom:1px solid rgba(255,255,255,.08)}}
+.qr-img-wrap{background:#fff;border-radius:12px;padding:14px;display:inline-block;
+  box-shadow:0 0 0 6px rgba(255,255,255,.06)}
+.qr-img-wrap img{display:block;width:200px;height:200px;object-fit:contain;border-radius:4px}
+.qr-pulse{width:200px;height:200px;border-radius:8px;border:2px dashed rgba(255,255,255,.2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:rgba(255,255,255,.35);font-size:13px;text-align:center;gap:8px}
+
+/* ── info panel ── */
+.info-panel{padding:24px 22px;display:flex;flex-direction:column;justify-content:center}
+.bank-badge{display:inline-flex;align-items:center;gap:8px;background:var(--c-green);
+  color:#fff;font-size:13px;font-weight:800;padding:5px 14px;border-radius:20px;margin-bottom:16px}
+.info-row{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.info-row:last-child{border:none}
+.info-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  color:rgba(255,255,255,.4);margin-bottom:4px}
+.info-val{font-weight:700;font-size:14px;color:#fff}
+.acct-val{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:800;
+  color:#4ADE80;letter-spacing:2px;word-break:break-all}
+.copy-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:12px;font-weight:700;
+  padding:5px 14px;border-radius:20px;cursor:pointer;transition:all .15s;margin-top:8px;width:100%}
+.copy-btn:hover{background:var(--c-green);border-color:var(--c-green);color:#fff}
+.copy-btn.copied{background:var(--c-green);border-color:var(--c-green);color:#fff}
+.content-chip{background:rgba(255,255,255,.07);border-radius:8px;padding:10px 14px;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;color:var(--c-yellow);margin-top:4px}
+
+/* ── debt banner ── */
+.debt-banner{background:var(--c-red-light);border:1.5px solid #FCA5A5;border-radius:var(--radius);
+  padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px}
 </style>{% endblock %}
 
-{% block content %}<div class="wrap-sm" style="max-width:800px">
+{% block content %}<div class="pay-wrap">
+
+  <!-- header -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">
     <div>
       <div style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:22px">💳 Nộp tiền</div>
@@ -30,29 +53,82 @@
   </div>
 
   {% if wallet.debt > 0 %}
-  <div class="debt-banner" style="margin-bottom:18px">
-    <div style="font-size:32px">⚠️</div>
+  <div class="debt-banner">
+    <div style="font-size:28px">⚠️</div>
     <div>
-      <div style="font-weight:800;font-size:16px;color:var(--c-red)">Công nợ hiện tại của bạn</div>
-      <div style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:24px;color:var(--c-red)">
-        {{ wallet.debt|floatformat:0 }}đ
-      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--c-red);text-transform:uppercase;letter-spacing:.5px">Công nợ hiện tại của bạn</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:22px;color:var(--c-red)">{{ wallet.debt|floatformat:0 }}đ</div>
     </div>
   </div>
   {% endif %}
 
-  <div class="pay-grid">
+  <!-- ── Top: QR + bank info ── -->
+  {% if group.bank_account or group.bank_qr %}
+  <div class="pay-top">
 
-    <!-- Left: form -->
-    <div class="card"><div class="card-pad">
-      <p style="font-weight:700;font-size:14px;margin-bottom:16px">📝 Thông tin thanh toán</p>
-      <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    <!-- QR panel -->
+    <div class="qr-panel">
+      {% if group.bank_qr %}
+      <div class="qr-img-wrap">
+        <img src="{{ group.bank_qr.url }}" alt="QR chuyển khoản">
+      </div>
+      <div style="margin-top:14px;text-align:center">
+        <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px">Quét mã để thanh toán</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">Mở app ngân hàng → Quét QR</div>
+      </div>
+      {% else %}
+      <div class="qr-pulse">
+        <div style="font-size:36px">📷</div>
+        <div>Chưa có mã QR</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Info panel -->
+    <div class="info-panel">
+      {% if group.bank_name %}
+      <div class="bank-badge">🏦 {{ group.bank_name }}</div>
+      {% endif %}
+
+      {% if group.bank_account %}
+      <div class="info-row">
+        <div class="info-lbl">Số tài khoản</div>
+        <div class="acct-val" id="acct-num">{{ group.bank_account }}</div>
+        <button class="copy-btn" onclick="copyText('acct-num', this)">
+          <span>📋</span> Sao chép số tài khoản
+        </button>
+      </div>
+      {% endif %}
+
+      {% if group.bank_owner %}
+      <div class="info-row">
+        <div class="info-lbl">Chủ tài khoản</div>
+        <div class="info-val" style="text-transform:uppercase;font-size:15px">{{ group.bank_owner }}</div>
+      </div>
+      {% endif %}
+
+      <div class="info-row">
+        <div class="info-lbl">Nội dung chuyển khoản</div>
+        <div class="content-chip" id="transfer-content">Thanh toan cau long {{ user.get_display_name }}</div>
+        <button class="copy-btn" onclick="copyText('transfer-content', this)">
+          <span>📋</span> Sao chép nội dung
+        </button>
+      </div>
+    </div>
+
+  </div>
+  {% endif %}
+
+  <!-- ── Bottom: form ── -->
+  <div class="card"><div class="card-pad">
+    <p style="font-weight:700;font-size:14px;margin-bottom:16px;color:var(--c-ink-2)">📝 Sau khi chuyển khoản, điền thông tin bên dưới để thông báo cho chủ nhóm</p>
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Số tiền (đ) *</label>
-          <input name="amount" type="number" class="form-control money"
+          <label class="form-label">Số tiền đã chuyển (đ) *</label>
+          <input name="amount" type="number" class="form-control"
             value="{{ wallet.debt|floatformat:0 }}" min="1000" step="1000" required
-            style="font-size:20px;font-weight:800;letter-spacing:-.5px;color:var(--c-green)">
-          <div class="form-hint">Nhập số tiền bạn muốn nộp</div>
+            style="font-size:20px;font-weight:800;color:var(--c-green)">
         </div>
         <div class="form-group">
           <label class="form-label">Phương thức</label>
@@ -61,107 +137,47 @@
             <option value="cash">💵 Tiền mặt</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Ảnh biên lai / ảnh chụp giao dịch</label>
-          <div id="receipt-dropzone" style="border:2px dashed var(--c-border-2);border-radius:10px;
-            padding:18px;text-align:center;cursor:pointer;background:var(--c-bg);transition:border-color .15s"
-            onclick="document.getElementById('receipt-input').click()"
-            ondragover="event.preventDefault();this.style.borderColor='var(--c-green)'"
-            ondragleave="this.style.borderColor='var(--c-border-2)'"
-            ondrop="handleReceiptDrop(event)">
-            <div style="font-size:26px;margin-bottom:4px">📎</div>
-            <div style="font-size:13px;font-weight:600;color:var(--c-ink-2)">Nhấp hoặc kéo thả ảnh</div>
-            <div style="font-size:11px;color:var(--c-ink-3);margin-top:2px">JPG, PNG (tùy chọn)</div>
-          </div>
-          <div id="receipt-preview-wrap" style="display:none;margin-top:10px">
-            <img id="receipt-preview" style="max-width:100%;border-radius:8px;border:1.5px solid var(--c-green)">
-            <div style="font-size:12px;color:var(--c-green);font-weight:600;margin-top:4px">✅ Đã chọn ảnh biên lai</div>
-          </div>
-          <input type="file" id="receipt-input" name="receipt_image" accept="image/*"
-            style="display:none" onchange="previewReceipt(this)">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Ghi chú</label>
-          <textarea name="note" class="form-control" rows="2" placeholder="Ghi chú thêm..."></textarea>
-        </div>
-        <button type="submit" class="btn btn-blue btn-lg btn-block">📤 Gửi thông báo cho chủ nhóm</button>
-      </form>
-    </div></div>
-
-    <!-- Right: bank info + QR -->
-    {% if group.bank_account or group.bank_qr %}
-    <div class="bank-card">
-      <div class="bank-card-hd">Thông tin chuyển khoản</div>
-      <div class="bank-card-bd">
-
-        {% if group.bank_qr %}
-        <div class="qr-box">
-          <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);
-            text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Quét mã QR để thanh toán</div>
-          <img src="{{ group.bank_qr.url }}" alt="QR chuyển khoản"
-            style="width:100%;max-width:180px;border-radius:8px;background:#fff;padding:6px;display:block;margin:0 auto">
-        </div>
-        {% endif %}
-
-        {% if group.bank_name %}
-        <div class="bank-row" style="margin-top:{% if group.bank_qr %}10px{% else %}0{% endif %}">
-          <span class="bank-lbl">Ngân hàng</span>
-          <span class="bank-val">{{ group.bank_name }}</span>
-        </div>
-        {% endif %}
-
-        {% if group.bank_account %}
-        <div class="bank-row">
-          <span class="bank-lbl">Số tài khoản</span>
-          <div style="display:flex;align-items:center">
-            <span class="bank-val" id="acct-num" style="font-family:'Space Grotesk',sans-serif;font-size:16px;color:#4ADE80;letter-spacing:1px">{{ group.bank_account }}</span>
-            <button class="copy-btn" onclick="copyAcct()">Sao chép</button>
-          </div>
-        </div>
-        {% endif %}
-
-        {% if group.bank_owner %}
-        <div class="bank-row">
-          <span class="bank-lbl">Chủ tài khoản</span>
-          <span class="bank-val" style="text-transform:uppercase">{{ group.bank_owner }}</span>
-        </div>
-        {% endif %}
-
-        <div class="bank-row">
-          <span class="bank-lbl">Nội dung chuyển khoản</span>
-          <span></span>
-        </div>
-        <div style="margin-top:8px;background:rgba(255,255,255,.07);border-radius:8px;padding:10px 12px;
-          font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;color:var(--c-yellow);
-          display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <span id="transfer-content">Thanh toan cau long {{ user.get_display_name }}</span>
-          <button class="copy-btn" onclick="copyContent()" style="flex-shrink:0">Sao chép</button>
-        </div>
-
       </div>
-    </div>
-    {% endif %}
 
-  </div>
+      <div class="form-group">
+        <label class="form-label">Ảnh biên lai / ảnh chụp giao dịch</label>
+        <div id="receipt-dropzone" style="border:2px dashed var(--c-border-2);border-radius:10px;
+          padding:20px;text-align:center;cursor:pointer;background:var(--c-bg);transition:border-color .15s"
+          onclick="document.getElementById('receipt-input').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--c-green)'"
+          ondragleave="this.style.borderColor='var(--c-border-2)'"
+          ondrop="handleReceiptDrop(event)">
+          <div style="font-size:28px;margin-bottom:6px">📎</div>
+          <div style="font-size:13px;font-weight:600;color:var(--c-ink-2)">Nhấp hoặc kéo thả ảnh biên lai</div>
+          <div style="font-size:11px;color:var(--c-ink-3);margin-top:3px">JPG, PNG (tùy chọn)</div>
+        </div>
+        <div id="receipt-preview-wrap" style="display:none;margin-top:10px">
+          <img id="receipt-preview" style="max-width:100%;max-height:200px;border-radius:8px;border:1.5px solid var(--c-green);display:block">
+          <div style="font-size:12px;color:var(--c-green);font-weight:600;margin-top:6px">✅ Đã chọn ảnh biên lai</div>
+        </div>
+        <input type="file" id="receipt-input" name="receipt_image" accept="image/*"
+          style="display:none" onchange="previewReceipt(this)">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ghi chú</label>
+        <textarea name="note" class="form-control" rows="2" placeholder="VD: Đã chuyển lúc 10h sáng..."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-blue btn-lg btn-block">📤 Gửi thông báo cho chủ nhóm</button>
+    </form>
+  </div></div>
+
 </div>{% endblock %}
 
 {% block extra_js %}<script>
-function copyAcct() {
-  var txt = document.getElementById('acct-num').textContent.trim();
+function copyText(elId, btn) {
+  var txt = document.getElementById(elId).textContent.trim();
   navigator.clipboard.writeText(txt).then(function() {
-    var btn = event.target;
-    btn.textContent = '✓ Đã sao chép';
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<span>✅</span> Đã sao chép!';
     btn.classList.add('copied');
-    setTimeout(function(){ btn.textContent = 'Sao chép'; btn.classList.remove('copied'); }, 1800);
-  });
-}
-function copyContent() {
-  var txt = document.getElementById('transfer-content').textContent.trim();
-  navigator.clipboard.writeText(txt).then(function() {
-    var btn = event.target;
-    btn.textContent = '✓ Đã sao chép';
-    btn.classList.add('copied');
-    setTimeout(function(){ btn.textContent = 'Sao chép'; btn.classList.remove('copied'); }, 1800);
+    setTimeout(function(){ btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
   });
 }
 function previewReceipt(input) {
@@ -179,6 +195,5 @@ function handleReceiptDrop(e) {
   var inp = document.getElementById('receipt-input');
   inp.files = e.dataTransfer.files;
   previewReceipt(inp);
-  document.getElementById('receipt-dropzone').style.borderColor = 'var(--c-border-2)';
 }
 </script>{% endblock %}
