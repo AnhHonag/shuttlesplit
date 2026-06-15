@@ -47,11 +47,15 @@ def create_group(request):
         bank_bin = request.POST.get('bank_bin', '').strip()
         bank_account = request.POST.get('bank_account', '').strip()
         bank_owner = request.POST.get('bank_owner', '').strip()
+        group_type = request.POST.get('group_type', Group.TYPE_BADMINTON)
+        if group_type not in (Group.TYPE_BADMINTON, Group.TYPE_MEAL):
+            group_type = Group.TYPE_BADMINTON
         if not name:
             messages.error(request, 'Tên nhóm không được để trống')
             return render(request, 'groups/create_group.html')
         group = Group.objects.create(
             name=name, description=description, owner=request.user,
+            group_type=group_type,
             bank_name=bank_name, bank_bin=bank_bin,
             bank_account=bank_account, bank_owner=bank_owner
         )
@@ -114,65 +118,83 @@ def group_detail(request, pk):
     total_spent = sum(d['wallet'].total_spent for d in member_data)
     payment_rate = int(paid_count / total_members * 100) if total_members else 0
 
-    # Sessions with per-session debt count (2 queries: sessions + prefetch participants)
-    debtor_ids = {d['member'].user_id for d in member_data if d['wallet'].debt > 0}
     from decimal import Decimal
-    sessions_list = list(group.sessions.prefetch_related('participants').order_by('-date', '-created_at')[:8])
-    for s in sessions_list:
-        parts = list(s.participants.all())
-        s.total_participants = len(parts)
-        s.debt_count = sum(1 for p in parts if p.user_id in debtor_ids)
-        s.fpp = (s.total_fee / s.total_participants).quantize(Decimal('1')) if s.total_participants else Decimal('0')
-
-    # Monthly costs last 6 months (1 query)
+    debtor_ids = {d['member'].user_id for d in member_data if d['wallet'].debt > 0}
     today = date.today()
     start_mo, start_yr = today.month - 5, today.year
     while start_mo <= 0:
         start_mo += 12
         start_yr -= 1
-    recent = list(group.sessions.filter(date__gte=date(start_yr, start_mo, 1)))
-    mo_map = defaultdict(list)
-    for s in recent:
-        mo_map[(s.date.year, s.date.month)].append(s)
+    start_date = date(start_yr, start_mo, 1)
 
-    monthly_costs = []
-    for i in range(5, -1, -1):
-        mo, yr = today.month - i, today.year
-        while mo <= 0:
-            mo += 12
-            yr -= 1
-        ss = mo_map.get((yr, mo), [])
-        monthly_costs.append({
-            'label': f'T{mo}',
-            'cost': int(sum(s.total_fee for s in ss)),
-            'count': len(ss),
-            'is_current': (mo == today.month and yr == today.year),
-        })
+    is_badminton = (group.group_type == Group.TYPE_BADMINTON)
+
+    if is_badminton:
+        # ── Badminton: sessions + session-based analytics ──
+        sessions_list = list(group.sessions.prefetch_related('participants').order_by('-date', '-created_at')[:8])
+        for s in sessions_list:
+            parts = list(s.participants.all())
+            s.total_participants = len(parts)
+            s.debt_count = sum(1 for p in parts if p.user_id in debtor_ids)
+            s.fpp = (s.total_fee / s.total_participants).quantize(Decimal('1')) if s.total_participants else Decimal('0')
+        meals_list = []
+        activity_count = group.sessions.count()
+
+        recent = list(group.sessions.filter(date__gte=start_date))
+        mo_map = defaultdict(list)
+        for s in recent:
+            mo_map[(s.date.year, s.date.month)].append(s)
+        monthly_costs = []
+        for i in range(5, -1, -1):
+            mo, yr = today.month - i, today.year
+            while mo <= 0: mo += 12; yr -= 1
+            ss = mo_map.get((yr, mo), [])
+            monthly_costs.append({'label': f'T{mo}', 'cost': int(sum(s.total_fee for s in ss)), 'count': len(ss), 'is_current': (mo == today.month and yr == today.year)})
+
+        top_qs = list(SessionParticipant.objects.filter(session__group=group).values('user_id').annotate(cnt=Count('id')).order_by('-cnt')[:5])
+        top_label = 'buổi'
+
+    else:
+        # ── Meal: meals + meal-based analytics ──
+        from meals.models import MealExpense, MealParticipant
+        sessions_list = []
+        meals_list = list(group.meals.prefetch_related('participants').order_by('-date', '-created_at')[:8])
+        for m in meals_list:
+            parts = list(m.participants.all())
+            m.cached_total = sum(p.amount for p in parts)
+            m.cached_count = len(parts)
+        activity_count = group.meals.count()
+
+        recent_meals = list(group.meals.prefetch_related('participants').filter(date__gte=start_date))
+        mo_map = defaultdict(list)
+        for m in recent_meals:
+            mo_map[(m.date.year, m.date.month)].append(m)
+        monthly_costs = []
+        for i in range(5, -1, -1):
+            mo, yr = today.month - i, today.year
+            while mo <= 0: mo += 12; yr -= 1
+            ms = mo_map.get((yr, mo), [])
+            monthly_costs.append({'label': f'T{mo}', 'cost': int(sum(m.cached_total for m in ms)), 'count': len(ms), 'is_current': (mo == today.month and yr == today.year)})
+
+        top_qs = list(MealParticipant.objects.filter(meal__group=group).values('user_id').annotate(cnt=Count('id')).order_by('-cnt')[:5])
+        top_label = 'phiếu'
+
     max_monthly_cost = max((mc['cost'] for mc in monthly_costs), default=1) or 1
     six_month_total = sum(mc['cost'] for mc in monthly_costs)
-
-    # Top participants by session count (2 queries)
-    top_qs = list(
-        SessionParticipant.objects.filter(session__group=group)
-        .values('user_id').annotate(cnt=Count('id')).order_by('-cnt')[:5]
-    )
     top_users = {u.pk: u for u in User.objects.filter(pk__in=[t['user_id'] for t in top_qs])}
-    top_participants = [
-        {'user': top_users[t['user_id']], 'cnt': t['cnt']}
-        for t in top_qs if t['user_id'] in top_users
-    ]
+    top_participants = [{'user': top_users[t['user_id']], 'cnt': t['cnt']} for t in top_qs if t['user_id'] in top_users]
 
     return render(request, 'groups/group_detail.html', {
-        'group': group, 'is_host': is_host,
+        'group': group, 'is_host': is_host, 'is_badminton': is_badminton,
         'members': members, 'member_data': member_data,
-        'sessions': sessions_list, 'my_wallet': my_wallet,
+        'sessions': sessions_list, 'meals': meals_list, 'my_wallet': my_wallet,
         'total_debt': total_debt, 'total_deposited': total_deposited,
         'total_spent': total_spent, 'total_members': total_members,
         'paid_count': paid_count, 'debt_count': debt_count,
         'payment_rate': payment_rate, 'monthly_costs': monthly_costs,
         'max_monthly_cost': max_monthly_cost, 'six_month_total': six_month_total,
-        'top_participants': top_participants,
-        'total_sessions_count': group.sessions.count(),
+        'top_participants': top_participants, 'top_label': top_label,
+        'activity_count': activity_count,
     })
 
 

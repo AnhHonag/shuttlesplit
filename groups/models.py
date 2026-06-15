@@ -8,7 +8,15 @@ def gen_code():
 
 
 class Group(models.Model):
+    TYPE_BADMINTON = 'badminton'
+    TYPE_MEAL = 'meal'
+    GROUP_TYPES = [
+        (TYPE_BADMINTON, '🏸 Chia tiền cầu lông'),
+        (TYPE_MEAL, '🍜 Chia tiền cơm / ăn uống'),
+    ]
+
     name = models.CharField(max_length=100)
+    group_type = models.CharField(max_length=20, choices=GROUP_TYPES, default=TYPE_BADMINTON)
     description = models.TextField(blank=True)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_groups')
     invite_code = models.CharField(max_length=10, unique=True, default=gen_code)

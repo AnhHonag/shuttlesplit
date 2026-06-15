@@ -1,36 +1,77 @@
-{% extends 'base.html' %}
-{% block title %}Tạo nhóm{% endblock %}
-{% block content %}
-<div class="wrap-sm">
+{% extends 'base.html' %}{% block title %}Tạo nhóm mới{% endblock %}
+{% block extra_css %}<style>
+.type-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+@media(max-width:480px){.type-cards{grid-template-columns:1fr}}
+.type-card{border:2.5px solid var(--c-border);border-radius:var(--radius-lg);padding:22px 18px;
+  cursor:pointer;transition:all .15s;text-align:center;position:relative;background:var(--c-white)}
+.type-card:hover{border-color:var(--c-green);background:#F0FDF4}
+.type-card.selected{border-color:var(--c-green);background:var(--c-green-light);box-shadow:0 0 0 3px rgba(22,163,74,.15)}
+.type-card .check{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;
+  background:var(--c-green);color:#fff;font-size:11px;display:none;align-items:center;justify-content:center}
+.type-card.selected .check{display:flex}
+.type-card .icon{font-size:40px;margin-bottom:10px}
+.type-card .label{font-weight:800;font-size:15px;color:var(--c-ink);margin-bottom:6px}
+.type-card .desc{font-size:12.5px;color:var(--c-ink-2);line-height:1.5}
+.type-card input[type=radio]{display:none}
+</style>{% endblock %}
+
+{% block content %}<div class="wrap-sm">
   <div class="page-header">
-    <div class="page-title">🏸 Tạo nhóm mới</div>
+    <div class="page-title">✨ Tạo nhóm mới</div>
+    <p class="page-sub">Chọn loại nhóm phù hợp với mục đích chia tiền của bạn</p>
   </div>
+
   <div class="card"><div class="card-pad">
     <form method="post" id="group-form">{% csrf_token %}
+
+      <!-- Chọn loại nhóm -->
+      <div style="margin-bottom:8px">
+        <label class="form-label" style="font-size:13px">Loại nhóm *</label>
+      </div>
+      <div class="type-cards">
+        <label class="type-card selected" id="card-badminton" onclick="selectType('badminton')">
+          <input type="radio" name="group_type" value="badminton" checked>
+          <div class="check">✓</div>
+          <div class="icon">🏸</div>
+          <div class="label">Chia tiền cầu lông</div>
+          <div class="desc">Tạo buổi chơi, chia đều chi phí sân + cầu cho tất cả người tham gia</div>
+        </label>
+        <label class="type-card" id="card-meal" onclick="selectType('meal')">
+          <input type="radio" name="group_type" value="meal">
+          <div class="check">✓</div>
+          <div class="icon">🍜</div>
+          <div class="label">Chia tiền cơm / ăn uống</div>
+          <div class="desc">Tạo phiếu ăn, nhập số tiền riêng cho từng người tùy theo phần ăn</div>
+        </label>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--c-border);margin:4px 0 20px">
+
+      <!-- Thông tin nhóm -->
       <div class="form-group">
         <label class="form-label">Tên nhóm *</label>
-        <input name="name" class="form-control" placeholder="VD: CLB Cầu Lông Quận 3" required autofocus>
+        <input name="name" id="group-name" class="form-control"
+          placeholder="VD: CLB Cầu Lông Quận 3" required autofocus>
       </div>
       <div class="form-group">
         <label class="form-label">Mô tả</label>
-        <textarea name="description" class="form-control" rows="2" placeholder="Mô tả ngắn về nhóm..."></textarea>
+        <textarea name="description" class="form-control" rows="2"
+          placeholder="Mô tả ngắn về nhóm..."></textarea>
       </div>
 
       <hr style="border:none;border-top:1px solid var(--c-border);margin:20px 0">
       <p style="font-weight:700;font-size:14px;margin-bottom:4px">💳 Thông tin nhận chuyển khoản</p>
-      <p class="text-sm text-muted" style="margin-bottom:16px">Dùng để tự động điền vào email nhắc nợ cho thành viên (tùy chọn)</p>
+      <p class="text-sm text-muted" style="margin-bottom:16px">Hiển thị cho thành viên khi nộp tiền (tùy chọn)</p>
 
       <div class="form-group">
         <label class="form-label">Ngân hàng</label>
         <input name="bank_name" class="form-control" placeholder="VD: Vietcombank, MB Bank, Techcombank...">
       </div>
-
       <div class="form-group">
         <label class="form-label">Số tài khoản</label>
         <input name="bank_account" class="form-control" placeholder="Nhập số tài khoản"
           style="font-size:16px;letter-spacing:1px;font-weight:600">
       </div>
-
       <div class="form-group">
         <label class="form-label">Chủ tài khoản</label>
         <input name="bank_owner" class="form-control" placeholder="Tên chủ tài khoản"
@@ -38,10 +79,22 @@
       </div>
 
       <div class="flex gap-2 mt-4">
-        <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">Tạo nhóm</button>
+        <button type="submit" class="btn btn-primary btn-lg">✨ Tạo nhóm</button>
         <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-lg">Hủy</a>
       </div>
     </form>
   </div></div>
-</div>
-{% endblock %}
+</div>{% endblock %}
+
+{% block extra_js %}<script>
+var TYPE_PLACEHOLDERS = {
+  badminton: 'VD: CLB Cầu Lông Quận 3',
+  meal: 'VD: Nhóm cơm văn phòng, Hội nhậu cuối tuần...',
+};
+function selectType(type) {
+  document.querySelectorAll('.type-card').forEach(function(c) { c.classList.remove('selected'); });
+  document.getElementById('card-' + type).classList.add('selected');
+  document.querySelector('[name="group_type"][value="' + type + '"]').checked = true;
+  document.getElementById('group-name').placeholder = TYPE_PLACEHOLDERS[type];
+}
+</script>{% endblock %}

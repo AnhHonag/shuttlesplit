@@ -37,10 +37,17 @@
   <div class="three-col mb-6">
     {% for m in memberships %}
     <a href="{% url 'group_detail' m.group.pk %}" class="group-card {% if m.is_host %}host-card{% endif %}">
-      <h3>{{ m.group.name }}</h3>
+      <h3>
+        {% if m.group.group_type == 'meal' %}🍜{% else %}🏸{% endif %}
+        {{ m.group.name }}
+      </h3>
       <div class="meta">
         <span>👥 {{ m.group.members.count }} thành viên</span>
+        {% if m.group.group_type == 'meal' %}
+        <span>🍜 {{ m.group.meals.count }} phiếu cơm</span>
+        {% else %}
         <span>📅 {{ m.group.sessions.count }} buổi</span>
+        {% endif %}
         {% if m.is_host %}<span style="color:var(--c-green);font-weight:700">👑 Chủ nhóm</span>{% endif %}
       </div>
     </a>
