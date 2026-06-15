@@ -106,6 +106,52 @@ def confirm_payment(user, group, amount, payment, confirmed_by):
     return wallet
 
 
+@transaction.atomic
+def deduct_for_meal(user, group, amount, meal, created_by):
+    """Trừ tiền cho bữa ăn (tiền cơm)"""
+    wallet = get_or_create_wallet(user, group)
+    amount = Decimal(str(amount))
+    balance_before = wallet.balance
+
+    wallet.balance -= amount
+    wallet.total_spent += amount
+    wallet.save()
+
+    WalletTransaction.objects.create(
+        wallet=wallet,
+        transaction_type=WalletTransaction.TYPE_MEAL,
+        amount=amount,
+        balance_before=balance_before,
+        balance_after=wallet.balance,
+        description=f"Tiền cơm: {meal.name} ({meal.date})",
+        created_by=created_by,
+    )
+    return wallet
+
+
+@transaction.atomic
+def refund_for_meal(user, group, amount, meal_name, created_by):
+    """Hoàn tiền khi xóa bữa ăn"""
+    wallet = get_or_create_wallet(user, group)
+    amount = Decimal(str(amount))
+    balance_before = wallet.balance
+
+    wallet.balance += amount
+    wallet.total_spent = max(Decimal('0'), wallet.total_spent - amount)
+    wallet.save()
+
+    WalletTransaction.objects.create(
+        wallet=wallet,
+        transaction_type=WalletTransaction.TYPE_REFUND,
+        amount=amount,
+        balance_before=balance_before,
+        balance_after=wallet.balance,
+        description=f"Hoàn tiền cơm: {meal_name}",
+        created_by=created_by,
+    )
+    return wallet
+
+
 def get_wallet_summary(user, group):
     wallet = get_or_create_wallet(user, group)
     return {

@@ -1,0 +1,149 @@
+{% extends 'base.html' %}{% block title %}Tạo phiếu tiền cơm — {{ group.name }}{% endblock %}
+{% block extra_css %}<style>
+.meal-member-row{display:flex;align-items:center;gap:12px;padding:12px 18px;
+  border-bottom:1px solid var(--c-border);transition:background .1s}
+.meal-member-row:last-child{border:none}
+.meal-member-row.selected{background:#F0FDF4}
+.meal-member-row.selected .row-amount{display:flex!important}
+.row-amount{display:none;align-items:center;gap:6px;flex-shrink:0}
+.amt-input{width:130px;padding:7px 10px;border:1.5px solid var(--c-border-2);border-radius:8px;
+  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--c-green);
+  text-align:right;outline:none}
+.amt-input:focus{border-color:var(--c-green);box-shadow:0 0 0 3px rgba(22,163,74,.12)}
+.select-toggle{width:20px;height:20px;accent-color:var(--c-green);cursor:pointer;flex-shrink:0}
+.total-bar{position:sticky;bottom:0;background:var(--c-white);border-top:2px solid var(--c-border);
+  padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 -4px 16px rgba(0,0,0,.06)}
+</style>{% endblock %}
+
+{% block content %}<div class="wrap-sm" style="max-width:700px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:22px">🍜 Tạo phiếu tiền cơm</div>
+      <div style="color:var(--c-ink-2);font-size:14px;margin-top:2px">{{ group.name }}</div>
+    </div>
+    <a href="{% url 'group_detail' group.pk %}" class="btn btn-ghost">← Quay lại</a>
+  </div>
+
+  <form method="post" id="meal-form">{% csrf_token %}
+
+    <!-- Thông tin bữa ăn -->
+    <div class="card" style="margin-bottom:16px"><div class="card-pad">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tên bữa ăn *</label>
+          <input name="name" class="form-control" placeholder="VD: Cơm trưa, Nhậu cuối tuần..." required autofocus>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngày</label>
+          <input name="date" type="date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Ghi chú</label>
+        <textarea name="note" class="form-control" rows="2" placeholder="Ghi chú thêm..."></textarea>
+      </div>
+    </div></div>
+
+    <!-- Danh sách thành viên + số tiền -->
+    <div class="card">
+      <div class="card-header" style="padding:12px 18px">
+        <span class="card-title">👥 Chọn người và nhập số tiền</span>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="btn btn-sm btn-secondary" onclick="selectAll()">Chọn tất cả</button>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="clearAll()">Bỏ chọn</button>
+        </div>
+      </div>
+
+      {% for m in members %}
+      <div class="meal-member-row" id="row-{{ m.user_id }}">
+        <input type="checkbox" name="selected_{{ m.user_id }}" class="select-toggle"
+          id="chk-{{ m.user_id }}" onchange="toggleRow(this, '{{ m.user_id }}')">
+        {% if m.user.avatar %}
+        <img src="{{ m.user.avatar.url }}" class="avatar" style="object-fit:cover;flex-shrink:0">
+        {% else %}
+        <div class="avatar" style="flex-shrink:0">{{ m.user.get_display_name|slice:":1"|upper }}</div>
+        {% endif %}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13.5px">{{ m.user.get_display_name }}</div>
+          <div class="text-xs text-muted">@{{ m.user.username }}</div>
+        </div>
+        <div class="row-amount" id="amt-wrap-{{ m.user_id }}">
+          <input type="number" name="amount_{{ m.user_id }}" id="amt-{{ m.user_id }}"
+            class="amt-input" placeholder="0" min="0" step="1000"
+            oninput="updateTotal()" onfocus="this.select()">
+          <span style="color:var(--c-ink-2);font-weight:700;font-size:14px">đ</span>
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- Sticky total bar -->
+      <div class="total-bar">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--c-ink-2);text-transform:uppercase;letter-spacing:.5px">Tổng cộng</div>
+          <div id="total-display" style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:22px;color:var(--c-green)">0đ</div>
+        </div>
+        <div style="text-align:right">
+          <div id="pax-display" style="font-size:13px;color:var(--c-ink-2)">0 người</div>
+          <button type="submit" class="btn btn-primary btn-lg" style="margin-top:6px">✅ Lưu phiếu tiền cơm</button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>{% endblock %}
+
+{% block extra_js %}<script>
+function fmt(n) {
+  return parseInt(n || 0).toLocaleString('vi-VN') + 'đ';
+}
+function toggleRow(chk, uid) {
+  var row = document.getElementById('row-' + uid);
+  var wrap = document.getElementById('amt-wrap-' + uid);
+  var input = document.getElementById('amt-' + uid);
+  if (chk.checked) {
+    row.classList.add('selected');
+    wrap.style.display = 'flex';
+    input.focus();
+    input.select();
+  } else {
+    row.classList.remove('selected');
+    wrap.style.display = 'none';
+    input.value = '';
+    updateTotal();
+  }
+  updateTotal();
+}
+function updateTotal() {
+  var total = 0, pax = 0;
+  document.querySelectorAll('.select-toggle').forEach(function(chk) {
+    if (chk.checked) {
+      var uid = chk.id.replace('chk-', '');
+      var val = parseFloat(document.getElementById('amt-' + uid).value || 0);
+      total += val;
+      pax++;
+    }
+  });
+  document.getElementById('total-display').textContent = fmt(total);
+  document.getElementById('pax-display').textContent = pax + ' người';
+}
+function selectAll() {
+  document.querySelectorAll('.select-toggle').forEach(function(chk) {
+    if (!chk.checked) { chk.checked = true; toggleRow(chk, chk.id.replace('chk-', '')); }
+  });
+}
+function clearAll() {
+  document.querySelectorAll('.select-toggle').forEach(function(chk) {
+    if (chk.checked) { chk.checked = false; toggleRow(chk, chk.id.replace('chk-', '')); }
+  });
+}
+// Allow Enter to move to next amount input
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.target.classList.contains('amt-input')) {
+    e.preventDefault();
+    var inputs = Array.from(document.querySelectorAll('.amt-input:not([style*="none"])'));
+    var idx = inputs.indexOf(e.target);
+    if (idx < inputs.length - 1) inputs[idx + 1].focus();
+  }
+});
+</script>{% endblock %}

@@ -221,6 +221,47 @@
         {% endfor %}
       </div>
 
+      <!-- Meals -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-header" style="padding:12px 18px">
+          <span class="card-title">🍜 Tiền cơm gần đây</span>
+          <div style="display:flex;gap:8px">
+            {% if is_host and group.is_active %}
+            <a href="{% url 'create_meal' group.pk %}" class="btn btn-sm btn-yellow">+ Tạo phiếu</a>
+            {% endif %}
+            <a href="{% url 'meal_list' group.pk %}" class="btn btn-sm btn-ghost">Tất cả →</a>
+          </div>
+        </div>
+        {% with recent_meals=group.meals.all|slice:":4" %}
+        {% if recent_meals %}
+        {% for meal in recent_meals %}
+        <a href="{% url 'meal_detail' meal.pk %}" style="display:flex;align-items:center;gap:12px;padding:11px 18px;
+          border-bottom:1px solid var(--c-border);text-decoration:none;color:inherit;transition:background .1s"
+          onmouseover="this.style.background='#FFFBEB'" onmouseout="this.style.background=''">
+          <div style="background:var(--c-yellow-light);border-radius:7px;padding:6px 8px;text-align:center;min-width:42px;flex-shrink:0">
+            <div style="font-size:9px;font-weight:700;color:#92400E;text-transform:uppercase">{{ meal.date|date:"M" }}</div>
+            <div style="font-size:17px;font-weight:800;line-height:1.1;color:var(--c-ink)">{{ meal.date|date:"d" }}</div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:13px">{{ meal.name }}</div>
+            <div class="text-xs text-muted" style="margin-top:2px">{{ meal.date|date:"d/m/Y" }}</div>
+          </div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:14px;
+            color:var(--c-yellow);flex-shrink:0" class="money">{{ meal.total_amount|floatformat:0 }}đ</div>
+          <span style="color:var(--c-ink-3);font-size:15px">›</span>
+        </a>
+        {% endfor %}
+        {% else %}
+        <div style="padding:24px 18px;text-align:center;color:var(--c-ink-3);font-size:13px">
+          Chưa có phiếu tiền cơm nào
+          {% if is_host and group.is_active %}
+          · <a href="{% url 'create_meal' group.pk %}" style="color:var(--c-green);font-weight:700">Tạo ngay</a>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+
       <!-- Sessions -->
       <div class="card">
         <div class="card-header" style="padding:12px 18px">

@@ -11,6 +11,7 @@ urlpatterns = [
     path('', include('sessions_app.urls')),
     path('', include('payments.urls')),
     path('', include('wallet.urls')),
+    path('', include('meals.urls')),
     # Serve uploaded media files in all environments (avatars, QR codes, receipts, covers)
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]

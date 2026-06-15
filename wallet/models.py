@@ -33,11 +33,13 @@ class WalletTransaction(models.Model):
     TYPE_DEDUCT = 'deduct'
     TYPE_DEBT_PAID = 'debt_paid'
     TYPE_REFUND = 'refund'
+    TYPE_MEAL = 'meal'
     TYPES = [
         (TYPE_DEPOSIT, 'Nạp tiền'),
         (TYPE_DEDUCT, 'Trừ tiền (buổi chơi)'),
         (TYPE_DEBT_PAID, 'Thanh toán nợ'),
         (TYPE_REFUND, 'Hoàn tiền'),
+        (TYPE_MEAL, 'Tiền cơm'),
     ]
 
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
