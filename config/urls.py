@@ -12,6 +12,9 @@ urlpatterns = [
     path('', include('wallet.urls')),
 ]
 
+# Always serve media files (user uploads: avatars, QR codes, receipts)
+# WhiteNoise handles static files in production
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
