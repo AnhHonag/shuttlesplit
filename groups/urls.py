@@ -13,6 +13,7 @@ urlpatterns = [
     path('groups/<int:group_pk>/members/<int:member_pk>/remove/', views.remove_member, name='remove_member'),
     path('groups/<int:pk>/deposit/', views.deposit_view, name='deposit'),
     path('groups/<int:pk>/debt-report/', views.debt_report, name='debt_report'),
+    path('groups/<int:pk>/member-balances/', views.member_balances, name='member_balances'),
     path('groups/<int:pk>/members/<int:member_pk>/remind/', views.send_debt_reminder, name='send_debt_reminder'),
     # Bank API
     path('api/banks/', bank_views.api_banks, name='api_banks'),

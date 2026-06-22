@@ -1,0 +1,179 @@
+{% extends 'base.html' %}{% block title %}Số dư thành viên — {{ group.name }}{% endblock %}
+{% block extra_css %}<style>
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+@media(max-width:640px){.stats3{grid-template-columns:1fr}}
+.sv2{background:var(--c-white);border:1px solid var(--c-border);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:14px}
+.sv2-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.sv2-val{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.5px;line-height:1.1}
+.sv2-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-ink-2);margin-top:3px}
+
+.filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.filter-tabs{display:flex;gap:3px;background:var(--c-bg);border-radius:8px;padding:3px}
+.ftab{padding:7px 14px;border:none;border-radius:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;background:transparent;color:var(--c-ink-2);transition:all .12s}
+.ftab.active{background:var(--c-white);color:var(--c-ink);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.search-wrap{display:flex;align-items:center;gap:8px;background:var(--c-bg);border:1.5px solid var(--c-border);border-radius:8px;padding:0 11px;flex:1;min-width:160px;max-width:280px}
+.search-wrap:focus-within{border-color:var(--c-green)}
+.search-wrap input{border:none;background:none;padding:8px 0;font-size:13.5px;color:var(--c-ink);font-family:'Plus Jakarta Sans',sans-serif;outline:none;width:100%}
+
+.bal-card{background:var(--c-white);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:16px 18px;display:flex;align-items:center;gap:14px;transition:box-shadow .15s,border-color .15s;margin-bottom:10px}
+.bal-card:hover{box-shadow:var(--shadow);border-color:var(--c-green)}
+.bal-card.is-debt{border-left:4px solid var(--c-red)}
+.bal-card.is-paid{border-left:4px solid var(--c-green)}
+
+.bal-main{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px}
+@media(max-width:560px){.bal-main{grid-template-columns:1fr;gap:8px}}
+
+.bal-amount{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.5px}
+.bal-amount.pos{color:var(--c-green)}
+.bal-amount.neg{color:var(--c-red)}
+
+.bal-meta{display:flex;gap:16px;margin-top:5px;flex-wrap:wrap}
+.bal-meta-item{font-size:12px;color:var(--c-ink-3)}
+.bal-meta-item strong{color:var(--c-ink-2);font-weight:700}
+
+.bal-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:560px){.bal-actions{justify-content:flex-start}}
+
+.last-tx{font-size:11px;color:var(--c-ink-3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>{% endblock %}
+
+{% block content %}<div class="wrap">
+  <div class="page-header flex items-center justify-between" style="margin-bottom:22px">
+    <div>
+      <div class="page-title">💳 Số dư thành viên</div>
+      <div class="page-sub">{{ group.name }}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="{% url 'deposit' group.pk %}" class="btn btn-yellow">💰 Nạp tiền</a>
+      <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary">← Quay lại</a>
+    </div>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="stats3">
+    <div class="sv2">
+      <div class="sv2-icon" style="background:var(--c-blue-light)">👥</div>
+      <div>
+        <div class="sv2-val" style="color:var(--c-blue)">{{ total_members }}</div>
+        <div class="sv2-lbl">Thành viên</div>
+      </div>
+    </div>
+    <div class="sv2">
+      <div class="sv2-icon" style="background:var(--c-green-light)">✅</div>
+      <div>
+        <div class="sv2-val" style="color:var(--c-green)">{{ paid_count }}</div>
+        <div class="sv2-lbl">Không nợ</div>
+      </div>
+    </div>
+    <div class="sv2">
+      <div class="sv2-icon" style="background:{% if debt_count > 0 %}var(--c-red-light){% else %}var(--c-green-light){% endif %}">{% if debt_count > 0 %}⚠️{% else %}✅{% endif %}</div>
+      <div>
+        <div class="sv2-val" style="color:{% if debt_count > 0 %}var(--c-red){% else %}var(--c-green){% endif %}">{{ debt_count }}</div>
+        <div class="sv2-lbl">Đang nợ · <span class="money">{{ total_debt|floatformat:0 }}đ</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="search-wrap">
+      <span style="font-size:14px;color:var(--c-ink-3)">🔍</span>
+      <input type="text" id="bal-search" placeholder="Tìm thành viên...">
+    </div>
+    <div class="filter-tabs">
+      <button class="ftab active" data-filter="all">Tất cả ({{ total_members }})</button>
+      <button class="ftab" data-filter="debt">🔴 Nợ ({{ debt_count }})</button>
+      <button class="ftab" data-filter="paid">✅ Sạch ({{ paid_count }})</button>
+    </div>
+  </div>
+
+  <!-- Member balance cards -->
+  <div id="bal-list">
+    {% for item in member_data %}
+    <div class="bal-card {% if item.wallet.debt > 0 %}is-debt{% else %}is-paid{% endif %}"
+         data-status="{% if item.wallet.debt > 0 %}debt{% else %}paid{% endif %}"
+         data-name="{{ item.member.user.get_display_name|lower }} {{ item.member.user.username|lower }}">
+
+      <!-- Avatar + name -->
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:0;width:180px">
+        {% if item.member.user.avatar %}
+        <img src="{{ item.member.user.avatar.url }}" alt="" class="avatar" style="object-fit:cover;flex-shrink:0">
+        {% else %}
+        <div class="avatar" style="flex-shrink:0">{{ item.member.user.get_display_name|slice:":1"|upper }}</div>
+        {% endif %}
+        <div style="min-width:0">
+          <div style="font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px">
+            {{ item.member.user.get_display_name }}
+            {% if item.member.is_host %}<span class="badge badge-green" style="font-size:10px;padding:1px 6px">👑</span>{% endif %}
+          </div>
+          <div class="text-xs text-muted">@{{ item.member.user.username }}</div>
+        </div>
+      </div>
+
+      <!-- Balance + meta + actions -->
+      <div class="bal-main">
+        <div>
+          <!-- Balance -->
+          <div class="bal-amount {% if item.wallet.balance >= 0 %}pos{% else %}neg{% endif %}">
+            {% if item.wallet.balance >= 0 %}+{% endif %}{{ item.wallet.balance|floatformat:0 }}đ
+          </div>
+          <!-- Sub-stats -->
+          <div class="bal-meta">
+            <span class="bal-meta-item">Nạp: <strong class="money text-green">{{ item.wallet.total_deposited|floatformat:0 }}đ</strong></span>
+            <span class="bal-meta-item">Chi: <strong class="money">{{ item.wallet.total_spent|floatformat:0 }}đ</strong></span>
+            {% if item.wallet.debt > 0 %}
+            <span class="bal-meta-item" style="color:var(--c-red)">Còn nợ: <strong class="money">{{ item.wallet.debt|floatformat:0 }}đ</strong></span>
+            {% endif %}
+          </div>
+          {% if item.last_tx %}
+          <div class="last-tx">Giao dịch cuối: {{ item.last_tx.description|default:item.last_tx.get_transaction_type_display }} — {{ item.last_tx.created_at|date:"d/m/Y" }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div class="bal-actions">
+          <a href="{% url 'wallet_detail' group.pk %}?user={{ item.member.user.pk }}" class="btn btn-sm btn-ghost">📋 Lịch sử</a>
+          {% if item.wallet.debt > 0 %}
+          <a href="{% url 'host_record_payment' group.pk item.member.pk %}" class="btn btn-sm btn-primary">✅ Ghi nhận trả</a>
+          <form method="post" action="{% url 'send_debt_reminder' group.pk item.member.pk %}" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="member_balances">
+            <button type="submit" class="btn btn-sm btn-yellow" title="Nhắc nợ {{ item.wallet.debt|floatformat:0 }}đ">📧 Nhắc</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="empty"><div class="empty-icon">👥</div><h3>Chưa có thành viên nào</h3></div>
+    {% endfor %}
+  </div>
+
+</div>{% endblock %}
+
+{% block extra_js %}<script>
+// Search
+document.getElementById('bal-search').addEventListener('input', function() {
+  var q = this.value.toLowerCase();
+  document.querySelectorAll('#bal-list .bal-card').forEach(function(card) {
+    card.style.display = card.dataset.name.includes(q) ? '' : 'none';
+  });
+  // reset filter tabs
+  document.querySelectorAll('.ftab').forEach(function(t){t.classList.remove('active');});
+  document.querySelector('.ftab[data-filter="all"]').classList.add('active');
+});
+
+// Filter tabs
+document.querySelectorAll('.ftab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.ftab').forEach(function(t){t.classList.remove('active');});
+    this.classList.add('active');
+    document.getElementById('bal-search').value = '';
+    var f = this.dataset.filter;
+    document.querySelectorAll('#bal-list .bal-card').forEach(function(card) {
+      card.style.display = (f === 'all' || card.dataset.status === f) ? '' : 'none';
+    });
+  });
+});
+</script>{% endblock %}

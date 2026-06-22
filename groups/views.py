@@ -109,6 +109,18 @@ def group_detail(request, pk):
 
     my_wallet = existing_wallets.get(request.user.pk) or get_or_create_wallet(request.user, group)
 
+    # Pending payments for current user (members waiting for host to confirm)
+    my_pending_amount = 0
+    my_pending_count = 0
+    if not is_host:
+        from payments.models import Payment
+        from django.db.models import Sum
+        pending_qs = Payment.objects.filter(
+            group=group, member=request.user, status=Payment.STATUS_PENDING
+        )
+        my_pending_amount = pending_qs.aggregate(total=Sum('amount'))['total'] or 0
+        my_pending_count = pending_qs.count()
+
     # Financial stats
     total_members = len(member_data)
     paid_count = sum(1 for d in member_data if d['wallet'].balance >= 0)
@@ -195,6 +207,7 @@ def group_detail(request, pk):
         'max_monthly_cost': max_monthly_cost, 'six_month_total': six_month_total,
         'top_participants': top_participants, 'top_label': top_label,
         'activity_count': activity_count,
+        'my_pending_amount': my_pending_amount, 'my_pending_count': my_pending_count,
     })
 
 
@@ -351,10 +364,53 @@ def send_debt_reminder(request, pk, member_pk):
 
 
 @login_required
-def debt_report(request, pk):
-    """Báo cáo công nợ toàn nhóm"""
+def member_balances(request, pk):
+    """Chủ nhóm xem số dư của từng thành viên"""
     group = get_object_or_404(Group, pk=pk)
-    get_object_or_404(GroupMember, group=group, user=request.user, is_active=True)
+    membership = get_object_or_404(GroupMember, group=group, user=request.user, is_active=True)
+    if not membership.is_host:
+        messages.error(request, 'Chỉ chủ nhóm mới có quyền xem số dư thành viên.')
+        return redirect('group_detail', pk=pk)
+
+    members = list(GroupMember.objects.filter(group=group, is_active=True).select_related('user'))
+    user_ids = [m.user_id for m in members]
+    existing_wallets = {w.user_id: w for w in Wallet.objects.filter(group=group, user_id__in=user_ids)}
+
+    member_data = []
+    for m in members:
+        wallet = existing_wallets.get(m.user_id) or get_or_create_wallet(m.user, group)
+        last_tx = wallet.transactions.order_by('-created_at').first()
+        member_data.append({'member': m, 'wallet': wallet, 'last_tx': last_tx})
+
+    member_data.sort(key=lambda x: x['wallet'].balance)
+
+    total_members = len(member_data)
+    paid_count = sum(1 for d in member_data if d['wallet'].balance >= 0)
+    debt_count = total_members - paid_count
+    total_debt = sum(d['wallet'].debt for d in member_data)
+    total_deposited = sum(d['wallet'].total_deposited for d in member_data)
+    total_spent = sum(d['wallet'].total_spent for d in member_data)
+
+    return render(request, 'groups/member_balances.html', {
+        'group': group,
+        'member_data': member_data,
+        'total_members': total_members,
+        'paid_count': paid_count,
+        'debt_count': debt_count,
+        'total_debt': total_debt,
+        'total_deposited': total_deposited,
+        'total_spent': total_spent,
+    })
+
+
+@login_required
+def debt_report(request, pk):
+    """Báo cáo công nợ toàn nhóm — chỉ dành cho chủ nhóm"""
+    group = get_object_or_404(Group, pk=pk)
+    membership = get_object_or_404(GroupMember, group=group, user=request.user, is_active=True)
+    if not membership.is_host:
+        messages.error(request, 'Chỉ chủ nhóm mới có quyền xem báo cáo công nợ.')
+        return redirect('group_detail', pk=pk)
     members = GroupMember.objects.filter(group=group, is_active=True).select_related('user')
     
     member_data = []
