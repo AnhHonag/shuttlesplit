@@ -200,6 +200,17 @@
             {% endif %}
             <div class="text-xs text-muted" style="margin-top:3px">Đã nạp: <span class="money" style="font-size:11.5px">{{ item.wallet.total_deposited|floatformat:0 }}đ</span></div>
           </div>
+          <!-- Participation toggle (host only, non-host members) -->
+          {% if is_host and not item.member.is_host %}
+          <form method="post" action="{% url 'toggle_member_participation' group.pk item.member.pk %}" style="flex-shrink:0">
+            {% csrf_token %}<input type="hidden" name="next" value="group_detail">
+            {% if item.member.is_participating %}
+            <button type="submit" class="btn btn-sm btn-secondary" style="white-space:nowrap" title="Chuyển sang tạm nghỉ — thành viên sẽ không được thêm vào buổi chơi">⏸</button>
+            {% else %}
+            <button type="submit" class="btn btn-sm btn-primary" style="white-space:nowrap" title="Kích hoạt trở lại">▶</button>
+            {% endif %}
+          </form>
+          {% endif %}
           <!-- 3-dot menu -->
           <div class="dd-wrap">
             <button class="dd-btn" onclick="toggleDd(this,event)">⋯</button>
