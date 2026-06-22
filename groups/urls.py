@@ -15,6 +15,7 @@ urlpatterns = [
     path('groups/<int:pk>/debt-report/', views.debt_report, name='debt_report'),
     path('groups/<int:pk>/member-balances/', views.member_balances, name='member_balances'),
     path('groups/<int:pk>/members/<int:member_pk>/remind/', views.send_debt_reminder, name='send_debt_reminder'),
+    path('groups/<int:group_pk>/members/<int:member_pk>/toggle-participation/', views.toggle_member_participation, name='toggle_member_participation'),
     # Bank API
     path('api/banks/', bank_views.api_banks, name='api_banks'),
     path('api/bank/lookup/', bank_views.api_lookup_account, name='api_bank_lookup'),

@@ -50,6 +50,7 @@ class GroupMember(models.Model):
     role = models.CharField(max_length=10, choices=ROLES, default=ROLE_MEMBER)
     joined_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    is_participating = models.BooleanField(default=True)  # False = tạm nghỉ, không vào buổi chia tiền
 
     class Meta:
         unique_together = ('group', 'user')

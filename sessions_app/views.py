@@ -12,7 +12,7 @@ User = get_user_model()
 @login_required
 def create_session_view(request, group_pk):
     group = get_object_or_404(Group, pk=group_pk, owner=request.user)
-    members = GroupMember.objects.filter(group=group, is_active=True).select_related('user')
+    members = GroupMember.objects.filter(group=group, is_active=True, is_participating=True).select_related('user')
 
     if request.method == 'POST':
         date = request.POST.get('date')
@@ -79,7 +79,7 @@ def edit_session(request, pk):
     if group.owner != request.user:
         messages.error(request, 'Chỉ chủ nhóm mới được chỉnh sửa buổi chơi')
         return redirect('session_detail', pk=pk)
-    all_members = GroupMember.objects.filter(group=group, is_active=True).select_related('user')
+    all_members = GroupMember.objects.filter(group=group, is_active=True, is_participating=True).select_related('user')
     current_participant_ids = list(session.participants.values_list('user_id', flat=True))
 
     if request.method == 'POST':

@@ -95,11 +95,11 @@
          data-name="{{ item.member.user.get_display_name|lower }} {{ item.member.user.username|lower }}">
 
       <!-- Avatar + name -->
-      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:0;width:180px">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:0;width:190px">
         {% if item.member.user.avatar %}
         <img src="{{ item.member.user.avatar.url }}" alt="" class="avatar" style="object-fit:cover;flex-shrink:0">
         {% else %}
-        <div class="avatar" style="flex-shrink:0">{{ item.member.user.get_display_name|slice:":1"|upper }}</div>
+        <div class="avatar" style="flex-shrink:0;{% if not item.member.is_participating and not item.member.is_host %}opacity:.5{% endif %}">{{ item.member.user.get_display_name|slice:":1"|upper }}</div>
         {% endif %}
         <div style="min-width:0">
           <div style="font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px">
@@ -107,6 +107,13 @@
             {% if item.member.is_host %}<span class="badge badge-green" style="font-size:10px;padding:1px 6px">👑</span>{% endif %}
           </div>
           <div class="text-xs text-muted">@{{ item.member.user.username }}</div>
+          {% if not item.member.is_host %}
+          {% if item.member.is_participating %}
+          <span class="badge badge-green" style="font-size:10px;padding:1px 6px;margin-top:3px">▶ Hoạt động</span>
+          {% else %}
+          <span class="badge badge-red" style="font-size:10px;padding:1px 6px;margin-top:3px">⏸ Tạm nghỉ</span>
+          {% endif %}
+          {% endif %}
         </div>
       </div>
 
@@ -133,6 +140,16 @@
         <!-- Actions -->
         <div class="bal-actions">
           <a href="{% url 'wallet_detail' group.pk %}?user={{ item.member.user.pk }}" class="btn btn-sm btn-ghost">📋 Lịch sử</a>
+          {% if not item.member.is_host %}
+          <form method="post" action="{% url 'toggle_member_participation' group.pk item.member.pk %}" style="display:inline">
+            {% csrf_token %}<input type="hidden" name="next" value="member_balances">
+            {% if item.member.is_participating %}
+            <button type="submit" class="btn btn-sm btn-secondary" title="Chuyển sang tạm nghỉ">⏸ Tạm nghỉ</button>
+            {% else %}
+            <button type="submit" class="btn btn-sm btn-primary" title="Kích hoạt trở lại">▶ Kích hoạt</button>
+            {% endif %}
+          </form>
+          {% endif %}
           {% if item.wallet.debt > 0 %}
           <a href="{% url 'host_record_payment' group.pk item.member.pk %}" class="btn btn-sm btn-primary">✅ Ghi nhận trả</a>
           <form method="post" action="{% url 'send_debt_reminder' group.pk item.member.pk %}" style="display:inline">

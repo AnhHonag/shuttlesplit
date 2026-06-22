@@ -329,6 +329,25 @@ def deposit_view(request, pk):
 
 
 @login_required
+def toggle_member_participation(request, group_pk, member_pk):
+    """Chủ nhóm bật/tắt trạng thái tham gia buổi chơi cho thành viên"""
+    group = get_object_or_404(Group, pk=group_pk, owner=request.user)
+    membership = get_object_or_404(GroupMember, pk=member_pk, group=group, is_active=True)
+    if membership.is_host:
+        messages.error(request, 'Không thể thay đổi trạng thái của chủ nhóm.')
+        return redirect('group_detail', pk=group_pk)
+    if request.method == 'POST':
+        membership.is_participating = not membership.is_participating
+        membership.save()
+        status = 'hoạt động' if membership.is_participating else 'tạm nghỉ'
+        messages.success(request, f'{membership.user.get_display_name()} chuyển sang trạng thái {status}.')
+    next_url = request.POST.get('next', '')
+    if next_url == 'member_balances':
+        return redirect('member_balances', pk=group_pk)
+    return redirect('group_detail', pk=group_pk)
+
+
+@login_required
 def send_debt_reminder(request, pk, member_pk):
     group = get_object_or_404(Group, pk=pk, owner=request.user)
     membership = get_object_or_404(GroupMember, pk=member_pk, group=group, is_active=True)
