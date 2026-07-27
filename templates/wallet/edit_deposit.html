@@ -1,0 +1,81 @@
+{% extends 'base.html' %}{% block title %}Sửa giao dịch — {{ group.name }}{% endblock %}
+{% block content %}<div class="wrap-md">
+
+  <div class="page-header flex items-center justify-between" style="margin-bottom:24px">
+    <div>
+      <div class="page-title">✏️ Sửa giao dịch</div>
+      <div class="page-sub">{{ group.name }} · {{ member_user.get_display_name }}</div>
+    </div>
+    <a href="{% url 'wallet_detail' group.pk %}?user={{ member_user.pk }}" class="btn btn-secondary">← Quay lại</a>
+  </div>
+
+  <!-- Current transaction info -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header"><span class="card-title">📋 Thông tin giao dịch cũ</span></div>
+    <div class="card-pad">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px">
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-ink-3);margin-bottom:4px">Loại</div>
+          <div style="font-weight:600;font-size:14px">
+            {% if tx.transaction_type == 'deposit' %}💰 Nạp tiền{% else %}✅ Thanh toán nợ{% endif %}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-ink-3);margin-bottom:4px">Số tiền hiện tại</div>
+          <div style="font-weight:800;font-size:18px;color:var(--c-green);font-family:'Space Grotesk',sans-serif">{{ tx.amount|floatformat:0 }}đ</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-ink-3);margin-bottom:4px">Ngày tạo</div>
+          <div style="font-size:14px;color:var(--c-ink-2)">{{ tx.created_at|date:"d/m/Y H:i" }}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-ink-3);margin-bottom:4px">Mô tả</div>
+          <div style="font-size:13px;color:var(--c-ink-2)">{{ tx.description|default:"(không có)" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit form -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">✏️ Nhập thông tin mới</span></div>
+    <div class="card-pad">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group" style="margin-bottom:18px">
+          <label class="form-label">Số tiền đúng <span style="color:var(--c-red)">*</span></label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="number" name="amount" class="form-control" min="1000" step="1000"
+                   value="{{ tx.amount|floatformat:0 }}" required style="max-width:240px"
+                   placeholder="Ví dụ: 100000">
+            <span style="font-size:14px;color:var(--c-ink-2)">đồng</span>
+          </div>
+          <div style="font-size:12px;color:var(--c-ink-3);margin-top:5px">
+            Số dư ví sẽ tự động được điều chỉnh theo mức chênh lệch.
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:24px">
+          <label class="form-label">Ghi chú lý do sửa <span style="color:var(--c-ink-3)">(không bắt buộc)</span></label>
+          <input type="text" name="note" class="form-control" maxlength="300"
+                 placeholder="Ví dụ: nhập nhầm số, sửa theo biên lai...">
+          <div style="font-size:12px;color:var(--c-ink-3);margin-top:5px">
+            Nếu để trống, hệ thống sẽ tự ghi chú "Sửa: Xđ → Yđ".
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button type="submit" class="btn btn-primary">✅ Xác nhận sửa</button>
+          <a href="{% url 'wallet_detail' group.pk %}?user={{ member_user.pk }}" class="btn btn-secondary">Hủy</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Warning -->
+  <div style="background:var(--c-red-light,#FEF2F2);border:1px solid #FECACA;border-radius:var(--radius);padding:12px 16px;margin-top:16px;font-size:13px;color:#991B1B">
+    ⚠️ Thao tác này sẽ thay đổi số dư ví của <strong>{{ member_user.get_display_name }}</strong>.
+    Hãy kiểm tra kỹ trước khi xác nhận.
+  </div>
+
+</div>{% endblock %}

@@ -59,7 +59,7 @@
     <div class="card-pad" style="padding-top:8px">
       {% if transactions %}
       {% for tx in transactions %}
-      <div class="tx-row">
+      <div class="tx-row" style="align-items:center">
         <div class="tx-icon {% if tx.transaction_type == 'deposit' or tx.transaction_type == 'debt_paid' %}in{% else %}out{% endif %}">
           {% if tx.transaction_type == 'deposit' %}💰
           {% elif tx.transaction_type == 'deduct' %}🏸
@@ -73,6 +73,9 @@
         <div class="tx-amt {% if tx.transaction_type == 'deposit' or tx.transaction_type == 'debt_paid' or tx.transaction_type == 'refund' %}in{% else %}out{% endif %}">
           {% if tx.transaction_type == 'deduct' %}-{% else %}+{% endif %}{{ tx.amount|floatformat:0 }}đ
         </div>
+        {% if viewing_other and tx.transaction_type in editable_types %}
+        <a href="{% url 'edit_deposit' group.pk tx.pk %}" class="btn btn-sm btn-ghost" style="flex-shrink:0;margin-left:6px" title="Sửa giao dịch này">✏️</a>
+        {% endif %}
       </div>
       {% endfor %}
       {% else %}

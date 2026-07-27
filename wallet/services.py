@@ -152,6 +152,32 @@ def refund_for_meal(user, group, amount, meal_name, created_by):
     return wallet
 
 
+@transaction.atomic
+def adjust_deposit(tx, new_amount, corrected_by, note=''):
+    """Sửa lại số tiền nạp/trả nợ sai. Chỉ dùng cho TYPE_DEPOSIT và TYPE_DEBT_PAID."""
+    new_amount = Decimal(str(new_amount))
+    old_amount = tx.amount
+    delta = new_amount - old_amount
+
+    wallet = tx.wallet
+    wallet.balance += delta
+    wallet.total_deposited += delta
+    wallet.save()
+
+    if note:
+        tx.description = note
+    else:
+        base = tx.description.split(' [Sửa')[0]
+        tx.description = (
+            f"{base} [Sửa: {old_amount:,.0f}đ → {new_amount:,.0f}đ"
+            f" bởi {corrected_by.get_display_name()}]"
+        )
+    tx.amount = new_amount
+    tx.balance_after = tx.balance_before + new_amount
+    tx.save()
+    return wallet, old_amount
+
+
 def get_wallet_summary(user, group):
     wallet = get_or_create_wallet(user, group)
     return {
