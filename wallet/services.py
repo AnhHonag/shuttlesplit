@@ -153,6 +153,50 @@ def refund_for_meal(user, group, amount, meal_name, created_by):
 
 
 @transaction.atomic
+def record_advance(user, group, amount, session, created_by):
+    """Ghi nhận người ứng tiền cho buổi chơi — cộng vào số dư ví"""
+    wallet = get_or_create_wallet(user, group)
+    amount = Decimal(str(amount))
+    balance_before = wallet.balance
+    wallet.balance += amount
+    wallet.total_deposited += amount
+    wallet.save()
+    WalletTransaction.objects.create(
+        wallet=wallet,
+        transaction_type=WalletTransaction.TYPE_ADVANCE,
+        amount=amount,
+        balance_before=balance_before,
+        balance_after=wallet.balance,
+        description=f"Ung tien buoi choi {session.date}",
+        session=session,
+        created_by=created_by,
+    )
+    return wallet
+
+
+@transaction.atomic
+def reverse_advance(user, group, amount, session, reversed_by):
+    """Hoàn lại ghi nhận ứng tiền khi sửa buổi chơi"""
+    wallet = get_or_create_wallet(user, group)
+    amount = Decimal(str(amount))
+    balance_before = wallet.balance
+    wallet.balance -= amount
+    wallet.total_deposited -= amount
+    wallet.save()
+    WalletTransaction.objects.create(
+        wallet=wallet,
+        transaction_type=WalletTransaction.TYPE_REFUND,
+        amount=amount,
+        balance_before=balance_before,
+        balance_after=wallet.balance,
+        description=f"Hoan ung tien - cap nhat buoi {session.date}",
+        session=session,
+        created_by=reversed_by,
+    )
+    return wallet
+
+
+@transaction.atomic
 def adjust_deposit(tx, new_amount, corrected_by, note=''):
     """Sửa lại số tiền nạp/trả nợ sai. Chỉ dùng cho TYPE_DEPOSIT và TYPE_DEBT_PAID."""
     new_amount = Decimal(str(new_amount))

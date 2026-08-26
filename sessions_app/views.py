@@ -28,6 +28,14 @@ def create_session_view(request, group_pk):
         other_fee_note = request.POST.get('other_fee_note', '').strip()
         note = request.POST.get('note', '').strip()
         participant_ids = request.POST.getlist('participants')
+        advance_user_ids = request.POST.getlist('advance_user_ids')
+        advance_amounts = request.POST.getlist('advance_amounts')
+        advances = []
+        for uid, amt in zip(advance_user_ids, advance_amounts):
+            try:
+                advances.append((int(uid), int(amt or 0)))
+            except (ValueError, TypeError):
+                pass
 
         if not date:
             messages.error(request, 'Vui lòng chọn ngày chơi')
@@ -41,7 +49,8 @@ def create_session_view(request, group_pk):
             court_fee=court_fee, shuttle_fee=shuttle_fee,
             water_fee=water_fee, other_fee=other_fee,
             other_fee_note=other_fee_note, note=note,
-            participant_ids=participant_ids, created_by=request.user
+            participant_ids=participant_ids, created_by=request.user,
+            advances=advances,
         )
         messages.success(request, f'Tạo buổi chơi thành công! Mỗi người đóng {session.fee_per_person:,.0f}đ')
         return redirect('session_detail', pk=session.pk)
@@ -56,6 +65,7 @@ def session_detail(request, pk):
     membership = get_object_or_404(GroupMember, group=group, user=request.user, is_active=True)
     is_host = membership.is_host
     participants = list(session.participants.select_related('user').all())
+    advances = list(session.advances.select_related('user').all())
     all_members = GroupMember.objects.filter(group=group, is_active=True).select_related('user')
     my_participation = next((p for p in participants if p.user_id == request.user.pk), None)
 
@@ -67,9 +77,14 @@ def session_detail(request, pk):
     for p in participants:
         p.group_wallet = wallets.get(p.user_id)
 
+    from decimal import Decimal as D
+    advance_total = sum(a.amount for a in advances) if advances else D('0')
+
     return render(request, 'sessions_app/session_detail.html', {
         'session': session,
         'participants': participants,
+        'advances': advances,
+        'advance_total': advance_total,
         'all_members': all_members,
         'is_host': is_host,
         'my_participation': my_participation,
@@ -86,6 +101,7 @@ def edit_session(request, pk):
         return redirect('session_detail', pk=pk)
     all_members = GroupMember.objects.filter(group=group, is_active=True, is_participating=True).select_related('user')
     current_participant_ids = list(session.participants.values_list('user_id', flat=True))
+    current_advances = list(session.advances.select_related('user').all())
 
     if request.method == 'POST':
         session.date = request.POST.get('date', session.date)
@@ -99,8 +115,15 @@ def edit_session(request, pk):
         session.save()
 
         participant_ids = request.POST.getlist('participants')
-        if participant_ids:
-            update_session_participants(session, participant_ids, request.user)
+        advance_user_ids = request.POST.getlist('advance_user_ids')
+        advance_amounts = request.POST.getlist('advance_amounts')
+        advances = []
+        for uid, amt in zip(advance_user_ids, advance_amounts):
+            try:
+                advances.append((int(uid), int(amt or 0)))
+            except (ValueError, TypeError):
+                pass
+        update_session_participants(session, participant_ids, request.user, advances=advances)
         messages.success(request, 'Cập nhật buổi chơi thành công!')
         return redirect('session_detail', pk=pk)
 
@@ -108,6 +131,7 @@ def edit_session(request, pk):
         'session': session,
         'all_members': all_members,
         'current_participant_ids': current_participant_ids,
+        'current_advances': current_advances,
     })
 
 

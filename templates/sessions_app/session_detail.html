@@ -54,6 +54,36 @@
     {% endif %}
   </div>
 
+  <!-- ADVANCE PAYERS -->
+  {% if advances %}
+  <div class="card" style="margin-top:24px">
+    <div class="card-header"><span class="card-title">💸 Người đã chi tiền</span></div>
+    <div class="card-pad" style="padding-top:8px">
+      {% for adv in advances %}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--c-border)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="avatar avatar-sm">{{ adv.user.get_display_name|slice:":1"|upper }}</div>
+          <div>
+            <div class="font-bold">{{ adv.user.get_display_name }}
+              {% if adv.user == request.user %}<span class="badge badge-green" style="margin-left:4px">Tôi</span>{% endif %}
+            </div>
+            <div class="text-xs text-muted">Ứng tiền cho cả nhóm</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:16px;color:var(--c-green)">+{{ adv.amount|floatformat:0 }}đ</div>
+          <div style="font-size:11px;color:var(--c-ink-3)">được cộng vào ví</div>
+        </div>
+      </div>
+      {% endfor %}
+      <div style="padding-top:8px;font-size:12px;color:var(--c-ink-3)">
+        Tổng ứng: <strong class="money" style="color:var(--c-green)">{{ advance_total|floatformat:0 }}đ</strong>
+        — mỗi người vẫn bị trừ phần của mình ({{ session.fee_per_person|floatformat:0 }}đ) bình thường.
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- PARTICIPANTS -->
   <div class="card mt-6" style="margin-top:24px">
     <div class="card-header"><span class="card-title">👥 Danh sách tham gia ({{ participants|length }} người)</span></div>

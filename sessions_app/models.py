@@ -56,3 +56,18 @@ class SessionParticipant(models.Model):
 
     def __str__(self):
         return f"{self.user.get_display_name()} - {self.session}"
+
+
+class SessionAdvance(models.Model):
+    """Ghi lại ai đã ứng tiền chi trả trước cho buổi chơi"""
+    session = models.ForeignKey(BadmintonSession, on_delete=models.CASCADE, related_name='advances')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=12, decimal_places=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('session', 'user')
+        verbose_name = 'Ứng tiền buổi chơi'
+
+    def __str__(self):
+        return f"{self.user.get_display_name()} ung {self.amount:,.0f}d - {self.session}"

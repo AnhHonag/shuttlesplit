@@ -34,12 +34,14 @@ class WalletTransaction(models.Model):
     TYPE_DEBT_PAID = 'debt_paid'
     TYPE_REFUND = 'refund'
     TYPE_MEAL = 'meal'
+    TYPE_ADVANCE = 'advance'
     TYPES = [
         (TYPE_DEPOSIT, 'Nạp tiền'),
         (TYPE_DEDUCT, 'Trừ tiền (buổi chơi)'),
         (TYPE_DEBT_PAID, 'Thanh toán nợ'),
         (TYPE_REFUND, 'Hoàn tiền'),
         (TYPE_MEAL, 'Tiền cơm'),
+        (TYPE_ADVANCE, 'Ứng tiền buổi chơi'),
     ]
 
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')

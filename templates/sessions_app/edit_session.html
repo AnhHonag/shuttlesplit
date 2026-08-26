@@ -35,9 +35,50 @@
         <p class="text-sm text-muted mt-2" style="margin-top:10px">⚠️ Cập nhật thành viên sẽ hoàn tiền cũ và tính lại chi phí mới</p>
       </div>
     </div>
+    <!-- AI CHI TIEN -->
+    <div class="card mb-4" style="margin-bottom:16px">
+      <div class="card-header">
+        <span class="card-title">💸 Ai đã chi tiền?</span>
+      </div>
+      <div class="card-pad">
+        <div id="advance-list" style="display:flex;flex-direction:column;gap:8px">
+          {% for adv in current_advances %}
+          <div style="display:flex;gap:8px;align-items:center">
+            <select name="advance_user_ids" class="form-control" style="flex:1">
+              <option value="">-- Chọn người --</option>
+              {% for m in all_members %}
+              <option value="{{ m.user.pk }}" {% if m.user.pk == adv.user.pk %}selected{% endif %}>{{ m.user.get_display_name }}</option>
+              {% endfor %}
+            </select>
+            <input type="number" name="advance_amounts" class="form-control" min="0" step="1000"
+                   value="{{ adv.amount|floatformat:0 }}" style="max-width:160px">
+            <button type="button" onclick="this.closest('div').remove()" class="btn btn-sm btn-ghost" style="flex-shrink:0;color:var(--c-red)">✕</button>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="button" onclick="addAdvance()" class="btn btn-sm btn-ghost" style="margin-top:10px">+ Thêm người chi tiền</button>
+        <p class="text-sm text-muted" style="margin-top:8px">⚠️ Cập nhật sẽ hoàn lại toàn bộ giao dịch cũ và tính lại từ đầu</p>
+      </div>
+    </div>
+
     <div class="flex gap-2">
       <button type="submit" class="btn btn-primary btn-lg">Lưu thay đổi</button>
       <a href="{% url 'session_detail' session.pk %}" class="btn btn-secondary btn-lg">Hủy</a>
     </div>
   </form>
-</div>{% endblock %}
+</div>
+
+{% block extra_js %}<script>
+const MEMBERS_EDIT=[{% for m in all_members %}{id:{{m.user.pk}},name:"{{m.user.get_display_name}}"}{% if not forloop.last %},{% endif %}{% endfor %}];
+function addAdvance(){
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center';
+  let opts='<option value="">-- Chọn người --</option>';
+  MEMBERS_EDIT.forEach(m=>opts+=`<option value="${m.id}">${m.name}</option>`);
+  row.innerHTML=`<select name="advance_user_ids" class="form-control" style="flex:1">${opts}</select>`
+    +`<input type="number" name="advance_amounts" class="form-control" min="0" step="1000" placeholder="So tien (d)" style="max-width:160px">`
+    +`<button type="button" onclick="this.closest('div').remove()" class="btn btn-sm btn-ghost" style="flex-shrink:0;color:var(--c-red)">X</button>`;
+  document.getElementById('advance-list').appendChild(row);
+}
+</script>{% endblock %}
+{% endblock %}

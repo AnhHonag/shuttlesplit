@@ -75,6 +75,21 @@
       </div>
     </div>
 
+    <!-- AI CHI TIEN -->
+    <div class="card mb-4" style="margin-bottom:16px">
+      <div class="card-header">
+        <span class="card-title">💸 Ai đã chi tiền?</span>
+        <span class="text-sm text-muted" id="advance-summary">Tổng ứng: <strong id="adv-total">0đ</strong> / <strong id="adv-target">0đ</strong></span>
+      </div>
+      <div class="card-pad">
+        <div id="advance-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        <button type="button" onclick="addAdvance()" class="btn btn-sm btn-ghost" style="margin-top:10px">+ Thêm người chi tiền</button>
+        <p class="text-sm text-muted" style="margin-top:8px">
+          Người ứng tiền sẽ được <strong>cộng vào số dư ví</strong>, và vẫn bị trừ phần chi phí của mình như mọi người.
+        </p>
+      </div>
+    </div>
+
     <div class="flex gap-3">
       <button type="submit" class="btn btn-primary btn-lg">✅ Tạo buổi chơi</button>
       <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary btn-lg">Hủy</a>
@@ -86,6 +101,13 @@
 <script>
 const fmt=n=>n.toLocaleString('vi')+'đ';
 const getV=n=>parseInt(document.querySelector('[name="'+n+'"]').value)||0;
+
+// member list from Django for advance dropdowns
+const MEMBERS=[{% for m in members %}{id:{{m.user.pk}},name:"{{m.user.get_display_name}}"}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+function totalFee(){
+  return getV('court_fee')+getV('shuttle_fee')+getV('water_fee')+getV('other_fee');
+}
 function calc(){
   const c=getV('court_fee'),s=getV('shuttle_fee'),w=getV('water_fee'),o=getV('other_fee');
   const total=c+s+w+o;
@@ -96,6 +118,18 @@ function calc(){
   document.getElementById('d-other').textContent=fmt(o);
   document.getElementById('d-total').textContent=fmt(total);
   document.getElementById('d-per').textContent=cnt?fmt(Math.round(total/cnt)):'0đ';
+  calcAdvance();
+}
+function calcAdvance(){
+  const total=totalFee();
+  let sum=0;
+  document.querySelectorAll('[name="advance_amounts"]').forEach(i=>sum+=parseInt(i.value||0));
+  document.getElementById('adv-total').textContent=fmt(sum);
+  document.getElementById('adv-target').textContent=fmt(total);
+  const diff=total-sum;
+  const el=document.getElementById('advance-summary');
+  el.style.color=diff===0?'var(--c-green)':diff>0?'var(--c-ink-2)':'var(--c-red)';
+  if(diff<0) el.querySelector('strong:last-child').textContent=fmt(total)+' (vượt '+fmt(-diff)+')';
 }
 function onCheck(el,id){
   document.getElementById(id).classList.toggle('is-checked',el.checked);
@@ -110,6 +144,17 @@ function selectAll(){
   });
   document.getElementById('sel-count').textContent='{{ members|length }}';
   calc();
+}
+function addAdvance(){
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center';
+  let opts='<option value="">-- Chọn người --</option>';
+  MEMBERS.forEach(m=>opts+=`<option value="${m.id}">${m.name}</option>`);
+  row.innerHTML=`<select name="advance_user_ids" class="form-control" style="flex:1">${opts}</select>`
+    +`<input type="number" name="advance_amounts" class="form-control" min="0" step="1000" placeholder="Số tiền (đ)" style="max-width:160px" oninput="calcAdvance()">`
+    +`<button type="button" onclick="this.closest('div').remove();calcAdvance()" class="btn btn-sm btn-ghost" style="flex-shrink:0;color:var(--c-red)">✕</button>`;
+  document.getElementById('advance-list').appendChild(row);
+  row.querySelector('select').focus();
 }
 document.querySelectorAll('.fee-input').forEach(el=>el.addEventListener('input',calc));
 </script>
