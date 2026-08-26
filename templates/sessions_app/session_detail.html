@@ -28,7 +28,7 @@
         <div style="background:var(--c-red-light);border-radius:10px;padding:16px;margin-top:12px;text-align:center">
           <div style="font-size:12px;font-weight:700;color:var(--c-red);text-transform:uppercase;letter-spacing:.5px">Mỗi người đóng</div>
           <div style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:32px;color:var(--c-red)">{{ session.fee_per_person|floatformat:0 }}đ</div>
-          <div style="font-size:12px;color:var(--c-ink-2)">{{ session.participants.count }} người tham gia</div>
+          <div style="font-size:12px;color:var(--c-ink-2)">{{ session.participant_count }} người tham gia{% if guests %} ({{ guests|length }} khách){% endif %}</div>
         </div>
         {% if session.note %}
         <div class="mt-4" style="padding:12px;background:var(--c-bg);border-radius:8px;font-size:13.5px;color:var(--c-ink-2)">
@@ -56,9 +56,9 @@
 
   <!-- PARTICIPANTS -->
   <div class="card mt-6" style="margin-top:24px">
-    <div class="card-header"><span class="card-title">👥 Danh sách tham gia ({{ participants|length }} người)</span></div>
+    <div class="card-header"><span class="card-title">👥 Danh sách tham gia ({{ participants|length }}{% if guests %} + {{ guests|length }} khách{% endif %} người)</span></div>
     <div class="tbl-wrap"><table>
-      <thead><tr><th>Thành viên</th><th>Phần tiền</th><th>Tình trạng nợ</th></tr></thead>
+      <thead><tr><th>Thành viên</th><th>Phần tiền</th><th>Tình trạng</th></tr></thead>
       <tbody>
         {% for p in participants %}
         <tr {% if p.user == request.user %}style="background:#F0FDF4"{% endif %}>
@@ -79,6 +79,34 @@
               {% endif %}
             {% else %}
               <span class="badge badge-gray">Chưa có ví</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+
+        {% for g in guests %}
+        <tr style="background:var(--c-bg)">
+          <td><div class="flex items-center gap-2">
+            <div class="avatar avatar-sm" style="background:var(--c-border-2);color:var(--c-ink-2);font-size:13px">👤</div>
+            <div>
+              <div class="font-bold">{{ g.name }} <span class="badge" style="background:#FEF9C3;color:#854D0E;font-size:10px;padding:1px 6px">Vãng lai</span></div>
+              <div class="text-xs text-muted">Khách tham dự</div>
+            </div>
+          </div></td>
+          <td><span class="money text-red">{{ g.amount_owed|floatformat:0 }}đ</span></td>
+          <td>
+            {% if is_host %}
+            <form method="post" action="{% url 'toggle_guest_paid' session.pk g.pk %}" style="display:inline">
+              {% csrf_token %}
+              {% if g.is_paid %}
+              <button type="submit" class="badge badge-green" style="border:none;cursor:pointer;font-size:12px" title="Bấm để đánh dấu chưa trả">✅ Đã trả</button>
+              {% else %}
+              <button type="submit" class="badge badge-red" style="border:none;cursor:pointer;font-size:12px" title="Bấm để đánh dấu đã trả">⏳ Chưa trả</button>
+              {% endif %}
+            </form>
+            {% else %}
+              {% if g.is_paid %}<span class="badge badge-green">✅ Đã trả</span>
+              {% else %}<span class="badge badge-red">⏳ Chưa trả</span>{% endif %}
             {% endif %}
           </td>
         </tr>

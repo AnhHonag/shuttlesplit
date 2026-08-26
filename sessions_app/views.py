@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from groups.models import Group, GroupMember
-from .models import BadmintonSession, SessionParticipant
+from .models import BadmintonSession, SessionParticipant, GuestParticipant
 from .services import create_session, update_session_participants
 
 User = get_user_model()
@@ -24,12 +24,13 @@ def create_session_view(request, group_pk):
         other_fee_note = request.POST.get('other_fee_note', '').strip()
         note = request.POST.get('note', '').strip()
         participant_ids = request.POST.getlist('participants')
+        guest_names = [n.strip() for n in request.POST.getlist('guest_names') if n.strip()]
 
         if not date:
             messages.error(request, 'Vui lòng chọn ngày chơi')
             return render(request, 'sessions_app/create_session.html', {'group': group, 'members': members})
-        if not participant_ids:
-            messages.error(request, 'Vui lòng chọn ít nhất 1 thành viên tham gia')
+        if not participant_ids and not guest_names:
+            messages.error(request, 'Vui lòng chọn ít nhất 1 người tham gia')
             return render(request, 'sessions_app/create_session.html', {'group': group, 'members': members})
 
         session = create_session(
@@ -37,7 +38,8 @@ def create_session_view(request, group_pk):
             court_fee=court_fee, shuttle_fee=shuttle_fee,
             water_fee=water_fee, other_fee=other_fee,
             other_fee_note=other_fee_note, note=note,
-            participant_ids=participant_ids, created_by=request.user
+            participant_ids=participant_ids, guest_names=guest_names,
+            created_by=request.user
         )
         messages.success(request, f'Tạo buổi chơi thành công! Mỗi người đóng {session.fee_per_person:,.0f}đ')
         return redirect('session_detail', pk=session.pk)
@@ -52,6 +54,7 @@ def session_detail(request, pk):
     membership = get_object_or_404(GroupMember, group=group, user=request.user, is_active=True)
     is_host = membership.is_host
     participants = list(session.participants.select_related('user').all())
+    guests = list(session.guests.all())
     all_members = GroupMember.objects.filter(group=group, is_active=True).select_related('user')
     my_participation = next((p for p in participants if p.user_id == request.user.pk), None)
 
@@ -66,6 +69,7 @@ def session_detail(request, pk):
     return render(request, 'sessions_app/session_detail.html', {
         'session': session,
         'participants': participants,
+        'guests': guests,
         'all_members': all_members,
         'is_host': is_host,
         'my_participation': my_participation,
@@ -81,6 +85,7 @@ def edit_session(request, pk):
         return redirect('session_detail', pk=pk)
     all_members = GroupMember.objects.filter(group=group, is_active=True, is_participating=True).select_related('user')
     current_participant_ids = list(session.participants.values_list('user_id', flat=True))
+    current_guest_names = list(session.guests.values_list('name', flat=True))
 
     if request.method == 'POST':
         session.date = request.POST.get('date', session.date)
@@ -94,8 +99,8 @@ def edit_session(request, pk):
         session.save()
 
         participant_ids = request.POST.getlist('participants')
-        if participant_ids:
-            update_session_participants(session, participant_ids, request.user)
+        guest_names = [n.strip() for n in request.POST.getlist('guest_names') if n.strip()]
+        update_session_participants(session, participant_ids, request.user, guest_names=guest_names)
         messages.success(request, 'Cập nhật buổi chơi thành công!')
         return redirect('session_detail', pk=pk)
 
@@ -103,6 +108,7 @@ def edit_session(request, pk):
         'session': session,
         'all_members': all_members,
         'current_participant_ids': current_participant_ids,
+        'current_guest_names': current_guest_names,
     })
 
 
@@ -210,3 +216,17 @@ def my_sessions(request):
         'total_owed': total_owed,
         'unpaid_amount': unpaid_amount,
     })
+
+
+@login_required
+def toggle_guest_paid(request, pk, guest_pk):
+    """Host đánh dấu khách vãng lai đã / chưa trả tiền"""
+    session = get_object_or_404(BadmintonSession, pk=pk)
+    membership = get_object_or_404(GroupMember, group=session.group, user=request.user, is_active=True)
+    if not membership.is_host:
+        messages.error(request, 'Chỉ chủ nhóm mới có thể cập nhật trạng thái khách.')
+        return redirect('session_detail', pk=pk)
+    guest = get_object_or_404(GuestParticipant, pk=guest_pk, session=session)
+    guest.is_paid = not guest.is_paid
+    guest.save()
+    return redirect('session_detail', pk=pk)

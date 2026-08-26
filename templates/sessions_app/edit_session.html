@@ -35,9 +35,40 @@
         <p class="text-sm text-muted mt-2" style="margin-top:10px">⚠️ Cập nhật thành viên sẽ hoàn tiền cũ và tính lại chi phí mới</p>
       </div>
     </div>
+    <!-- GUESTS -->
+    <div class="card mb-4" style="margin-bottom:16px">
+      <div class="card-header">
+        <span class="card-title">🙋 Khách vãng lai</span>
+      </div>
+      <div class="card-pad">
+        <div id="guest-list" style="display:flex;flex-direction:column;gap:8px">
+          {% for gname in current_guest_names %}
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" name="guest_names" class="form-control" value="{{ gname }}" placeholder="Tên khách..." style="flex:1">
+            <button type="button" onclick="this.closest('div').remove()" class="btn btn-sm btn-ghost" style="flex-shrink:0;color:var(--c-red)">✕</button>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="button" onclick="addGuest()" class="btn btn-sm btn-ghost" style="margin-top:10px">+ Thêm khách vãng lai</button>
+        <p class="text-sm text-muted" style="margin-top:8px">⚠️ Cập nhật danh sách sẽ hoàn tiền cũ và tính lại chi phí mới (bao gồm cả khách)</p>
+      </div>
+    </div>
+
     <div class="flex gap-2">
       <button type="submit" class="btn btn-primary btn-lg">Lưu thay đổi</button>
       <a href="{% url 'session_detail' session.pk %}" class="btn btn-secondary btn-lg">Hủy</a>
     </div>
   </form>
-</div>{% endblock %}
+</div>
+
+{% block extra_js %}<script>
+function addGuest(){
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center';
+  row.innerHTML='<input type="text" name="guest_names" class="form-control" placeholder="Tên khách..." style="flex:1">'
+    +'<button type="button" onclick="this.closest(\'div\').remove()" class="btn btn-sm btn-ghost" style="flex-shrink:0;color:var(--c-red)">✕</button>';
+  document.getElementById('guest-list').appendChild(row);
+  row.querySelector('input').focus();
+}
+</script>{% endblock %}
+{% endblock %}

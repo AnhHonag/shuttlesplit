@@ -6,4 +6,5 @@ urlpatterns = [
     path('sessions/<int:pk>/', views.session_detail, name='session_detail'),
     path('sessions/<int:pk>/edit/', views.edit_session, name='edit_session'),
     path('my-sessions/', views.my_sessions, name='my_sessions'),
+    path('sessions/<int:pk>/guests/<int:guest_pk>/toggle-paid/', views.toggle_guest_paid, name='toggle_guest_paid'),
 ]
