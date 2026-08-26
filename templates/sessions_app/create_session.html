@@ -75,19 +75,6 @@
       </div>
     </div>
 
-    <!-- GUESTS -->
-    <div class="card mb-4" style="margin-bottom:16px">
-      <div class="card-header">
-        <span class="card-title">🙋 Khách vãng lai</span>
-        <span class="text-sm text-muted">Không cần tài khoản — nhập tên là xong</span>
-      </div>
-      <div class="card-pad">
-        <div id="guest-list" style="display:flex;flex-direction:column;gap:8px"></div>
-        <button type="button" onclick="addGuest()" class="btn btn-sm btn-ghost" style="margin-top:10px">+ Thêm khách vãng lai</button>
-        <p class="text-sm text-muted" style="margin-top:8px">Tiền của khách được chia đều như thành viên. Host tự theo dõi khách đã trả chưa.</p>
-      </div>
-    </div>
-
     <div class="flex gap-3">
       <button type="submit" class="btn btn-primary btn-lg">✅ Tạo buổi chơi</button>
       <a href="{% url 'group_detail' group.pk %}" class="btn btn-secondary btn-lg">Hủy</a>
@@ -99,14 +86,10 @@
 <script>
 const fmt=n=>n.toLocaleString('vi')+'đ';
 const getV=n=>parseInt(document.querySelector('[name="'+n+'"]').value)||0;
-function guestCount(){
-  return Array.from(document.querySelectorAll('[name="guest_names"]')).filter(i=>i.value.trim()).length;
-}
 function calc(){
   const c=getV('court_fee'),s=getV('shuttle_fee'),w=getV('water_fee'),o=getV('other_fee');
   const total=c+s+w+o;
-  const members=document.querySelectorAll('[name="participants"]:checked').length;
-  const cnt=members+guestCount();
+  const cnt=document.querySelectorAll('[name="participants"]:checked').length;
   document.getElementById('d-court').textContent=fmt(c);
   document.getElementById('d-shuttle').textContent=fmt(s);
   document.getElementById('d-water').textContent=fmt(w);
@@ -126,18 +109,6 @@ function selectAll(){
     el.closest('.member-chk').classList.add('is-checked');
   });
   document.getElementById('sel-count').textContent='{{ members|length }}';
-  calc();
-}
-function addGuest(){
-  const row=document.createElement('div');
-  row.style.cssText='display:flex;gap:8px;align-items:center';
-  row.innerHTML='<input type="text" name="guest_names" class="form-control" placeholder="Tên khách..." style="flex:1" oninput="calc()">'
-    +'<button type="button" onclick="removeGuest(this)" class="btn btn-sm btn-ghost" style="flex-shrink:0;color:var(--c-red)">✕</button>';
-  document.getElementById('guest-list').appendChild(row);
-  row.querySelector('input').focus();
-}
-function removeGuest(btn){
-  btn.closest('div').remove();
   calc();
 }
 document.querySelectorAll('.fee-input').forEach(el=>el.addEventListener('input',calc));
