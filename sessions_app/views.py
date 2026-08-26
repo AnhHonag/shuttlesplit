@@ -11,7 +11,11 @@ User = get_user_model()
 
 @login_required
 def create_session_view(request, group_pk):
-    group = get_object_or_404(Group, pk=group_pk, owner=request.user)
+    group = get_object_or_404(Group, pk=group_pk)
+    membership = get_object_or_404(GroupMember, group=group, user=request.user, is_active=True)
+    if not membership.is_host:
+        messages.error(request, 'Chi chu nhom moi duoc tao buoi choi.')
+        return redirect('group_detail', pk=group_pk)
     members = GroupMember.objects.filter(group=group, is_active=True, is_participating=True).select_related('user')
 
     if request.method == 'POST':
@@ -76,8 +80,9 @@ def session_detail(request, pk):
 def edit_session(request, pk):
     session = get_object_or_404(BadmintonSession, pk=pk)
     group = session.group
-    if group.owner != request.user:
-        messages.error(request, 'Chỉ chủ nhóm mới được chỉnh sửa buổi chơi')
+    host_membership = GroupMember.objects.filter(group=group, user=request.user, is_active=True, role=GroupMember.ROLE_HOST).first()
+    if not host_membership:
+        messages.error(request, 'Chi chu nhom moi duoc chinh sua buoi choi.')
         return redirect('session_detail', pk=pk)
     all_members = GroupMember.objects.filter(group=group, is_active=True, is_participating=True).select_related('user')
     current_participant_ids = list(session.participants.values_list('user_id', flat=True))
